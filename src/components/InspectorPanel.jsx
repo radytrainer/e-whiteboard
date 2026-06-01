@@ -17,7 +17,14 @@ import { useBoardStore } from '../store/boardStore';
 
 export default function InspectorPanel() {
   const {
+    tool,
     selectedId,
+    pencilColor,
+    setPencilColor,
+    pencilWidth,
+    setPencilWidth,
+    eraserWidth,
+    setEraserWidth,
     textColor,
     setTextColor,
     textSize,
@@ -43,8 +50,14 @@ export default function InspectorPanel() {
     [objects, selectedId]
   );
 
-  // Only show if there is an active selection of type shape, text, or sticky
-  if (!selectedObj || !['shape', 'text', 'sticky'].includes(selectedObj.type)) {
+  // --- Context-aware panel visibility ---
+  const showPencilPanel  = tool === 'pencil';
+  const showEraserPanel  = tool === 'eraser';
+  const showTextPanel    = tool === 'text'   || (tool === 'select' && selectedObj?.type === 'text');
+  const showStickyPanel  = tool === 'sticky' || (tool === 'select' && selectedObj?.type === 'sticky');
+  const showShapePanel   = tool === 'shape'  || (tool === 'select' && selectedObj?.type === 'shape');
+
+  if (!showPencilPanel && !showEraserPanel && !showTextPanel && !showStickyPanel && !showShapePanel) {
     return null;
   }
 
@@ -67,35 +80,39 @@ export default function InspectorPanel() {
     { label: 'Mono',     value: 'monospace'        },
   ];
 
-  // --- Active values ---
-  const activeTextColor   = (selectedObj.type === 'text' ? selectedObj.fontColor    : undefined) ?? textColor;
-  const activeTextSize    = (selectedObj.type === 'text' ? selectedObj.fontSize     : undefined) ?? textSize;
-  const activeFontFamily  = (selectedObj.type === 'text' ? selectedObj.fontFamily   : undefined) ?? textFont;
-  const activeIsBold      = selectedObj.type === 'text' ? !!selectedObj.isBold      : false;
-  const activeIsItalic    = selectedObj.type === 'text' ? !!selectedObj.isItalic    : false;
-  const activeIsUnderline = selectedObj.type === 'text' ? !!selectedObj.isUnderline : false;
-  const activeAlign       = selectedObj.type === 'text' ? (selectedObj.align || 'left') : 'left';
+  // --- Active values (fallback to store settings if no active selected object) ---
+  const activeTextColor   = (selectedObj?.type === 'text' ? selectedObj.fontColor    : undefined) ?? textColor;
+  const activeTextSize    = (selectedObj?.type === 'text' ? selectedObj.fontSize     : undefined) ?? textSize;
+  const activeFontFamily  = (selectedObj?.type === 'text' ? selectedObj.fontFamily   : undefined) ?? textFont;
+  const activeIsBold      = selectedObj?.type === 'text' ? !!selectedObj.isBold      : false;
+  const activeIsItalic    = selectedObj?.type === 'text' ? !!selectedObj.isItalic    : false;
+  const activeIsUnderline = selectedObj?.type === 'text' ? !!selectedObj.isUnderline : false;
+  const activeAlign       = selectedObj?.type === 'text' ? (selectedObj.align || 'left') : 'left';
 
-  const activeShapeType   = (selectedObj.type === 'shape' ? selectedObj.shapeType : undefined) ?? shapeType;
-  const activeShapeSides  = (selectedObj.type === 'shape' ? selectedObj.sides     : undefined) ?? shapeSides;
-  const activeShapeStroke = (selectedObj.type === 'shape' ? selectedObj.stroke    : undefined) ?? shapeStroke;
-  const activeShapeFill   = (selectedObj.type === 'shape' ? selectedObj.fill      : undefined) ?? shapeFill;
-  const activeStickyColor = (selectedObj.type === 'sticky' ? selectedObj.color    : undefined) ?? stickyColor;
+  const activeShapeType   = (selectedObj?.type === 'shape' ? selectedObj.shapeType : undefined) ?? shapeType;
+  const activeShapeSides  = (selectedObj?.type === 'shape' ? selectedObj.sides     : undefined) ?? shapeSides;
+  const activeShapeStroke = (selectedObj?.type === 'shape' ? selectedObj.stroke    : undefined) ?? shapeStroke;
+  const activeShapeFill   = (selectedObj?.type === 'shape' ? selectedObj.fill      : undefined) ?? shapeFill;
+  const activeStickyColor = (selectedObj?.type === 'sticky' ? selectedObj.color    : undefined) ?? stickyColor;
 
   const applyText = (updates) => {
     if (updates.fontColor  !== undefined) setTextColor(updates.fontColor);
     if (updates.fontSize   !== undefined) setTextSize(updates.fontSize);
     if (updates.fontFamily !== undefined) setTextFont(updates.fontFamily);
-    updateObject(selectedId, updates);
+    if (selectedId && selectedObj?.type === 'text') {
+      updateObject(selectedId, updates);
+    }
   };
 
   const applyShape = (strokeColor, fillValue) => {
     if (strokeColor !== undefined) setShapeStroke(strokeColor);
     if (fillValue   !== undefined) setShapeFill(fillValue);
-    const patch = {};
-    if (strokeColor !== undefined) patch.stroke = strokeColor;
-    if (fillValue   !== undefined) patch.fill   = fillValue;
-    updateObject(selectedId, patch);
+    if (selectedId && selectedObj?.type === 'shape') {
+      const patch = {};
+      if (strokeColor !== undefined) patch.stroke = strokeColor;
+      if (fillValue   !== undefined) patch.fill   = fillValue;
+      updateObject(selectedId, patch);
+    }
   };
 
   const deriveFill = (choice) => {
@@ -114,11 +131,86 @@ export default function InspectorPanel() {
 
   return (
     <div className={`${panelCls} w-52`}>
-      {/* ── TEXT INSPECTOR ── */}
-      {selectedObj.type === 'text' && (
+      {/* ── PENCIL PROPERTIES ── */}
+      {showPencilPanel && (
         <>
           <div className="text-[10px] font-bold uppercase tracking-wider text-purple-500 dark:text-purple-400 font-mono">
-            Text Properties
+            Pencil Tools
+          </div>
+          <div>
+            <label className={labelCls}>Pen Color</label>
+            <div className="grid grid-cols-5 gap-1.5">
+              {colorPalette.map((c) => (
+                <button key={c} onClick={() => setPencilColor(c)} style={{ backgroundColor: c }}
+                  className={`w-6 h-6 rounded-full border transition-all ${
+                    pencilColor === c ? 'border-zinc-800 dark:border-white scale-110 ring-2 ring-purple-600/30'
+                                     : 'border-zinc-300 dark:border-zinc-700 hover:scale-105'}`} />
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Brush Size</label>
+              <span className="text-xs font-mono text-zinc-500">{pencilWidth}px</span>
+            </div>
+            <input type="range" min="1" max="20" value={pencilWidth}
+              onChange={(e) => setPencilWidth(parseInt(e.target.value))}
+              className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-600" />
+          </div>
+        </>
+      )}
+
+      {/* ── ERASER PROPERTIES ── */}
+      {showEraserPanel && (
+        <>
+          <div className="text-[10px] font-bold uppercase tracking-wider text-purple-500 dark:text-purple-400 font-mono">
+            Eraser Tools
+          </div>
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Eraser Size</label>
+              <span className="text-xs font-mono text-zinc-500">{eraserWidth}px</span>
+            </div>
+            <input type="range" min="10" max="100" value={eraserWidth}
+              onChange={(e) => setEraserWidth(parseInt(e.target.value))}
+              className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-600" />
+          </div>
+        </>
+      )}
+
+      {/* ── STICKY NOTE PROPERTIES ── */}
+      {showStickyPanel && (
+        <>
+          <div className="text-[10px] font-bold uppercase tracking-wider text-purple-500 dark:text-purple-400 font-mono">
+            Note Color
+          </div>
+          <div>
+            <div className="grid grid-cols-5 gap-1.5">
+              {stickyColors.map((colorObj) => (
+                <button key={colorObj.bg}
+                  onClick={() => {
+                    setStickyColor(colorObj.bg);
+                    if (selectedId && selectedObj?.type === 'sticky') {
+                      updateObject(selectedId, { color: colorObj.bg });
+                    }
+                  }}
+                  style={{ backgroundColor: colorObj.bg }}
+                  title={colorObj.name}
+                  className={`w-6 h-6 rounded-md border transition-all ${
+                    activeStickyColor === colorObj.bg
+                      ? 'border-zinc-800 dark:border-white scale-110 ring-2 ring-purple-600/30'
+                      : 'border-zinc-300 dark:border-zinc-700 hover:scale-105'}`} />
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── TEXT PROPERTIES ── */}
+      {showTextPanel && (
+        <>
+          <div className="text-[10px] font-bold uppercase tracking-wider text-purple-500 dark:text-purple-400 font-mono">
+            Text Style
           </div>
 
           {/* Color */}
@@ -155,8 +247,13 @@ export default function InspectorPanel() {
                 { icon: Underline, key: 'isUnderline', active: activeIsUnderline },
               ].map(({ icon: Icon, key, active }) => (
                 <button key={key}
-                  onClick={() => updateObject(selectedId, { [key]: !active })}
-                  className={`flex-1 py-1.5 rounded-lg border flex items-center justify-center transition-all ${
+                  disabled={!selectedId || selectedObj?.type !== 'text'}
+                  onClick={() => {
+                    if (selectedId && selectedObj?.type === 'text') {
+                      updateObject(selectedId, { [key]: !active });
+                    }
+                  }}
+                  className={`flex-1 py-1.5 rounded-lg border flex items-center justify-center transition-all disabled:opacity-40 ${
                     active ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800'
                            : 'bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50'}`}>
                   <Icon className="w-3.5 h-3.5" />
@@ -175,8 +272,13 @@ export default function InspectorPanel() {
                 { icon: AlignRight,  val: 'right'  },
               ].map(({ icon: Icon, val }) => (
                 <button key={val}
-                  onClick={() => updateObject(selectedId, { align: val })}
-                  className={`flex-1 py-1.5 rounded-lg border flex items-center justify-center transition-all ${
+                  disabled={!selectedId || selectedObj?.type !== 'text'}
+                  onClick={() => {
+                    if (selectedId && selectedObj?.type === 'text') {
+                      updateObject(selectedId, { align: val });
+                    }
+                  }}
+                  className={`flex-1 py-1.5 rounded-lg border flex items-center justify-center transition-all disabled:opacity-40 ${
                     activeAlign === val ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800'
                                        : 'bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50'}`}>
                   <Icon className="w-3.5 h-3.5" />
@@ -205,38 +307,11 @@ export default function InspectorPanel() {
         </>
       )}
 
-      {/* ── STICKY NOTE INSPECTOR ── */}
-      {selectedObj.type === 'sticky' && (
+      {/* ── SHAPE PROPERTIES ── */}
+      {showShapePanel && (
         <>
           <div className="text-[10px] font-bold uppercase tracking-wider text-purple-500 dark:text-purple-400 font-mono">
-            Note Properties
-          </div>
-          <div>
-            <label className={labelCls}>Note Color</label>
-            <div className="grid grid-cols-5 gap-1.5">
-              {stickyColors.map((colorObj) => (
-                <button key={colorObj.bg}
-                  onClick={() => {
-                    setStickyColor(colorObj.bg);
-                    updateObject(selectedId, { color: colorObj.bg });
-                  }}
-                  style={{ backgroundColor: colorObj.bg }}
-                  title={colorObj.name}
-                  className={`w-6 h-6 rounded-md border transition-all ${
-                    activeStickyColor === colorObj.bg
-                      ? 'border-zinc-800 dark:border-white scale-110 ring-2 ring-purple-600/30'
-                      : 'border-zinc-300 dark:border-zinc-700 hover:scale-105'}`} />
-              ))}
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* ── SHAPE INSPECTOR ── */}
-      {selectedObj.type === 'shape' && (
-        <>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-purple-500 dark:text-purple-400 font-mono">
-            Shape Properties
+            Shape Style
           </div>
 
           {/* Shape type grid */}
@@ -270,7 +345,9 @@ export default function InspectorPanel() {
                       } else {
                         setShapeType(s.id);
                       }
-                      updateObject(selectedId, updates);
+                      if (selectedId && selectedObj?.type === 'shape') {
+                        updateObject(selectedId, updates);
+                      }
                     }}
                     title={s.label}
                     className={`p-2 rounded-lg border flex flex-col items-center justify-center gap-1 transition-all ${
