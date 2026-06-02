@@ -6,37 +6,42 @@ export default function FormulaPanel({ isOpen, onClose }) {
 
   const formulaCategories = [
     {
-      title: 'Geometry',
-      formulas: [
-        { name: 'Circle Area', equation: 'Area = πr²' },
-        { name: 'Circumference', equation: 'Circumference = 2πr' },
-        { name: 'Sphere Volume', equation: 'V = 4/3 πr³' },
-        { name: 'Triangle Area', equation: 'Area = ½bh' },
-      ],
-    },
-    {
-      title: 'Algebra',
+      title: 'Math',
       formulas: [
         { name: 'Pythagorean Theorem', equation: 'a² + b² = c²' },
         { name: 'Quadratic Formula', equation: 'x = (-b ± √(b² − 4ac)) / 2a' },
+        { name: 'Circle Area', equation: 'A = πr²' },
         { name: 'Slope Formula', equation: 'm = (y₂ - y₁) / (x₂ - x₁)' },
-        { name: 'Binomial Theorem', equation: '(a + b)² = a² + 2ab + b²' },
+        { name: 'Derivative', equation: "f'(x) = lim[h→0] (f(x+h) - f(x))/h" },
       ],
     },
     {
-      title: 'Calculus',
+      title: 'Physics',
       formulas: [
-        { name: 'Indefinite Integral', equation: '∫ f(x) dx' },
-        { name: 'Fundamental Theorem', equation: '∫[a,b] f(x) dx = F(b) - F(a)' },
-        { name: 'Derivative definition', equation: "f'(x) = lim[h→0] (f(x+h) - f(x))/h" },
+        { name: "Newton's Second Law", equation: 'F = ma' },
+        { name: "Einstein's Equation", equation: 'E = mc²' },
+        { name: "Ohm's Law", equation: 'V = IR' },
+        { name: 'Gravitational Force', equation: 'F = G(m₁m₂)/r²' },
+        { name: 'Kinetic Energy', equation: 'KE = ½mv²' },
       ],
     },
     {
-      title: 'Statistics',
+      title: 'Chemistry',
       formulas: [
-        { name: 'Standard Deviation', equation: 'σ = √(Σ(x−μ)² / N)' },
-        { name: 'Arithmetic Mean', equation: 'μ = (Σ x) / N' },
-        { name: 'Probability Union', equation: 'P(A ∪ B) = P(A) + P(B) - P(A ∩ B)' },
+        { name: 'Ideal Gas Law', equation: 'PV = nRT' },
+        { name: 'pH Formula', equation: 'pH = -log[H⁺]' },
+        { name: 'Molarity', equation: 'M = mol/L' },
+        { name: "Avogadro's Number", equation: 'Nₐ = 6.022 × 10²³' },
+        { name: 'Photosynthesis', equation: '6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂' },
+      ],
+    },
+    {
+      title: 'Biology',
+      formulas: [
+        { name: 'Hardy-Weinberg', equation: 'p² + 2pq + q² = 1' },
+        { name: 'Cellular Respiration', equation: 'C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + ATP' },
+        { name: 'Surface Area/Volume', equation: 'SA:V = 6 / d' },
+        { name: 'Population Growth', equation: 'dN/dt = rN(1 - N/K)' },
       ],
     },
   ];
