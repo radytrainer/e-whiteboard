@@ -14,6 +14,7 @@ import { useBoardStore } from '../store/boardStore';
 export default function BottomActions() {
   const {
     selectedId,
+    selectedIds,
     deleteObject,
     undo,
     redo,
@@ -29,6 +30,7 @@ export default function BottomActions() {
   const handleZoomIn = () => setScale(Math.min(15, scale * 1.15));
   const handleZoomOut = () => setScale(Math.max(0.15, scale / 1.15));
   const handleReset = () => resetView();
+  const hasSelection = selectedIds.length > 0 || Boolean(selectedId);
 
   const btnBase = 'p-2 rounded-lg transition-all focus:outline-none cursor-pointer';
   const btnNormal = `${btnBase} text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white`;
@@ -76,7 +78,7 @@ export default function BottomActions() {
 
         <button
           onClick={() => deleteObject()}
-          disabled={!selectedId}
+          disabled={!hasSelection}
           title="Delete Selection (Del)"
           className={`${btnBase} text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-30 disabled:cursor-default disabled:hover:bg-transparent`}
         >

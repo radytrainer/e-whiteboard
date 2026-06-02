@@ -1,9 +1,34 @@
 import { create } from 'zustand';
 
+const OBJECTS_STORAGE_PREFIX = 'math-khmer-whiteboard-objects';
+const SETTINGS_STORAGE_KEY = 'math-khmer-whiteboard-settings';
+
+const getObjectsStorageKey = (roomId = 'default') => `${OBJECTS_STORAGE_PREFIX}:${roomId}`;
+
+const persistObjects = (objects, roomId = 'default') => {
+  localStorage.setItem(getObjectsStorageKey(roomId), JSON.stringify(objects));
+};
+
+const getInitialRoomId = () => {
+  if (typeof window === 'undefined') {
+    return 'default';
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const rawRoomId = (params.get('room') || 'default')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-_]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  return rawRoomId || 'default';
+};
+
 // Retrieve initial objects from localStorage
-const getSavedObjects = () => {
+const getSavedObjects = (roomId = 'default') => {
   try {
-    const saved = localStorage.getItem('math-khmer-whiteboard-objects');
+    const saved = localStorage.getItem(getObjectsStorageKey(roomId));
     return saved ? JSON.parse(saved) : [];
   } catch (error) {
     console.error('Error loading board state:', error);
@@ -14,7 +39,7 @@ const getSavedObjects = () => {
 // Retrieve initial settings
 const getSavedSettings = () => {
   try {
-    const saved = localStorage.getItem('math-khmer-whiteboard-settings');
+    const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
       return {
@@ -39,10 +64,12 @@ const getSavedSettings = () => {
 
 export const useBoardStore = create((set, get) => {
   const initialSettings = getSavedSettings();
+  const initialRoomId = getInitialRoomId();
 
   return {
     // Stage State
-    objects: getSavedObjects(),
+    roomId: initialRoomId,
+    objects: getSavedObjects(initialRoomId),
     selectedId: null,
     selectedIds: [], // multi-select
     tool: 'select', // 'select' | 'pan' | 'pencil' | 'eraser' | 'text' | 'sticky' | 'image'
@@ -82,6 +109,18 @@ export const useBoardStore = create((set, get) => {
     setTool: (tool) => set({ tool, selectedId: null, selectedIds: [] }),
     setSelectedId: (selectedId) => set({ selectedId, selectedIds: selectedId ? [selectedId] : [] }),
     setSelectedIds: (selectedIds) => set({ selectedIds, selectedId: selectedIds[0] ?? null }),
+    setRoomId: (roomId) => {
+      const safeRoomId = roomId || 'default';
+      const roomObjects = getSavedObjects(safeRoomId);
+      set({
+        roomId: safeRoomId,
+        objects: roomObjects,
+        selectedId: null,
+        selectedIds: [],
+        undoStack: [],
+        redoStack: [],
+      });
+    },
 
     selectAll: () => {
       const { objects } = get();
@@ -138,7 +177,7 @@ export const useBoardStore = create((set, get) => {
         gridSize: state.gridSize,
         gridOpacity: state.gridOpacity,
       };
-      localStorage.setItem('math-khmer-whiteboard-settings', JSON.stringify(settings));
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
     },
 
     // History helpers
@@ -160,7 +199,7 @@ export const useBoardStore = create((set, get) => {
       });
       
       // Auto-save objects to LocalStorage
-      localStorage.setItem('math-khmer-whiteboard-objects', JSON.stringify(currentObjects));
+      persistObjects(currentObjects, get().roomId);
     },
 
     undo: () => {
@@ -176,9 +215,10 @@ export const useBoardStore = create((set, get) => {
         undoStack: newUndoStack,
         redoStack: [...redoStack, currentSnapshot],
         selectedId: null,
+        selectedIds: [],
       });
 
-      localStorage.setItem('math-khmer-whiteboard-objects', JSON.stringify(previous));
+      persistObjects(previous, get().roomId);
     },
 
     redo: () => {
@@ -194,9 +234,10 @@ export const useBoardStore = create((set, get) => {
         undoStack: [...undoStack, currentSnapshot],
         redoStack: newRedoStack,
         selectedId: null,
+        selectedIds: [],
       });
 
-      localStorage.setItem('math-khmer-whiteboard-objects', JSON.stringify(next));
+      persistObjects(next, get().roomId);
     },
 
     // Objects CRUD
@@ -210,10 +251,11 @@ export const useBoardStore = create((set, get) => {
       set((state) => ({
         objects: [...state.objects, newObj],
         selectedId: id,
+        selectedIds: [id],
       }));
 
       // Update LocalStorage
-      localStorage.setItem('math-khmer-whiteboard-objects', JSON.stringify(get().objects));
+      persistObjects(get().objects, get().roomId);
     },
 
     updateObject: (id, updates) => {
@@ -228,7 +270,7 @@ export const useBoardStore = create((set, get) => {
         });
 
         // Auto-save to LocalStorage
-        localStorage.setItem('math-khmer-whiteboard-objects', JSON.stringify(updatedObjects));
+        persistObjects(updatedObjects, get().roomId);
         return { objects: updatedObjects };
       });
     },
@@ -250,7 +292,7 @@ export const useBoardStore = create((set, get) => {
 
       set((state) => {
         const remaining = state.objects.filter((obj) => !targets.includes(obj.id));
-        localStorage.setItem('math-khmer-whiteboard-objects', JSON.stringify(remaining));
+        persistObjects(remaining, get().roomId);
         return {
           objects: remaining,
           selectedId: null,
@@ -276,10 +318,11 @@ export const useBoardStore = create((set, get) => {
 
       set((state) => {
         const newObjects = [...state.objects, clone];
-        localStorage.setItem('math-khmer-whiteboard-objects', JSON.stringify(newObjects));
+        persistObjects(newObjects, get().roomId);
         return {
           objects: newObjects,
           selectedId: clone.id,
+          selectedIds: [clone.id],
         };
       });
     },
@@ -292,14 +335,28 @@ export const useBoardStore = create((set, get) => {
       set({
         objects: [],
         selectedId: null,
+        selectedIds: [],
       });
 
-      localStorage.setItem('math-khmer-whiteboard-objects', JSON.stringify([]));
+      persistObjects([], get().roomId);
+    },
+
+    replaceObjects: (objects, options = {}) => {
+      const { persist = true } = options;
+      const safeObjects = Array.isArray(objects) ? objects : [];
+      set({
+        objects: safeObjects,
+        selectedId: null,
+        selectedIds: [],
+      });
+      if (persist) {
+        persistObjects(safeObjects, get().roomId);
+      }
     },
 
     // Trigger local save manually if needed
     saveBoardState: () => {
-      localStorage.setItem('math-khmer-whiteboard-objects', JSON.stringify(get().objects));
+      persistObjects(get().objects, get().roomId);
     }
   };
 });

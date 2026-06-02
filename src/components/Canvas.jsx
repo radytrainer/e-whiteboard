@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Stage, Layer, Line, Text, Rect, Group, Image as KonvaImage, Transformer, Circle, RegularPolygon, Arrow } from 'react-konva';
+import Konva from 'konva';
 import { useBoardStore } from '../store/boardStore';
 import TextEditor from './TextEditor';
 import { isLineIntersectingEraser, isRectIntersectingEraser } from '../utils/canvasHelpers';
@@ -31,6 +32,7 @@ function RenderImage({ obj, onSelect, onChange }) {
     <KonvaImage
       ref={imageRef}
       id={obj.id}
+      name="selectable-object"
       image={image || undefined}
       x={obj.x}
       y={obj.y}
@@ -71,6 +73,7 @@ function RenderStickyNote({ obj, onSelect, onDoubleClick, onChange }) {
     <Group
       ref={groupRef}
       id={obj.id}
+      name="selectable-object"
       x={obj.x}
       y={obj.y}
       rotation={obj.rotation}
@@ -143,6 +146,7 @@ function RenderShape({ obj, onSelect, onChange }) {
   const commonProps = {
     ref: shapeRef,
     id: obj.id,
+    name: 'selectable-object',
     x: obj.x,
     y: obj.y,
     rotation: obj.rotation || 0,
@@ -245,7 +249,9 @@ export default function Canvas({ stageRef }) {
   const {
     objects,
     selectedId,
+    selectedIds,
     setSelectedId,
+    setSelectedIds,
     tool,
     scale,
     setScale,
@@ -279,8 +285,10 @@ export default function Canvas({ stageRef }) {
   // State for shape drag-drawing
   const [drawingShapeId, setDrawingShapeId] = useState(null);
   const [shapeStartPos, setShapeStartPos] = useState(null);
+  const [selectionRect, setSelectionRect] = useState(null);
 
   const transformerRef = useRef(null);
+  const selectionRectRef = useRef(null);
   const containerRef = useRef(null);
 
   // Monitor Spacebar state for Pan mode
@@ -312,10 +320,14 @@ export default function Canvas({ stageRef }) {
     const stage = stageRef.current;
     if (!stage) return;
 
-    if (selectedId && !editingId) {
-      const selectedNode = stage.findOne('#' + selectedId);
-      if (selectedNode) {
-        transformerRef.current.nodes([selectedNode]);
+    if ((selectedIds.length > 0 || selectedId) && !editingId) {
+      const nodeIds = selectedIds.length > 0 ? selectedIds : selectedId ? [selectedId] : [];
+      const selectedNodes = nodeIds
+        .map((id) => stage.findOne('#' + id))
+        .filter(Boolean);
+
+      if (selectedNodes.length > 0) {
+        transformerRef.current.nodes(selectedNodes);
         transformerRef.current.getLayer().batchDraw();
       } else {
         transformerRef.current.nodes([]);
@@ -323,7 +335,34 @@ export default function Canvas({ stageRef }) {
     } else {
       transformerRef.current.nodes([]);
     }
-  }, [selectedId, editingId, objects, stageRef]);
+  }, [selectedId, selectedIds, editingId, objects, stageRef]);
+
+  const getStagePoint = () => {
+    const stage = stageRef.current;
+    const pointer = stage?.getPointerPosition();
+    if (!pointer) return null;
+
+    return {
+      x: (pointer.x - position.x) / scale,
+      y: (pointer.y - position.y) / scale,
+    };
+  };
+
+  const updateSelectionFromEvent = (id, event) => {
+    if (tool !== 'select') return;
+
+    const isMultiSelect = event?.evt?.shiftKey || event?.evt?.ctrlKey || event?.evt?.metaKey;
+    if (!isMultiSelect) {
+      setSelectedId(id);
+      return;
+    }
+
+    const nextIds = selectedIds.includes(id)
+      ? selectedIds.filter((selectedItemId) => selectedItemId !== id)
+      : [...selectedIds, id];
+
+    setSelectedIds(nextIds);
+  };
 
   // Create Background Pattern Image dynamically
   const bgPatternImage = useMemo(() => {
@@ -379,7 +418,6 @@ export default function Canvas({ stageRef }) {
       e.target.name() === 'canvas-grid-rect';
 
     if (clickedOnEmpty) {
-      setSelectedId(null);
       setEditingId(null);
     }
 
@@ -387,6 +425,21 @@ export default function Canvas({ stageRef }) {
     if (tool === 'pan' || isSpacePressed) {
       setIsDraggingStage(true);
       stage.container().style.cursor = 'grabbing';
+      return;
+    }
+
+    if (tool === 'select' && clickedOnEmpty) {
+      const point = getStagePoint();
+      if (!point) return;
+
+      setSelectedIds([]);
+      setSelectionRect({
+        x1: point.x,
+        y1: point.y,
+        x2: point.x,
+        y2: point.y,
+        visible: true,
+      });
       return;
     }
 
@@ -522,6 +575,18 @@ export default function Canvas({ stageRef }) {
       return;
     }
 
+    if (selectionRect?.visible && tool === 'select') {
+      const point = getStagePoint();
+      if (!point) return;
+
+      setSelectionRect((current) => current ? {
+        ...current,
+        x2: point.x,
+        y2: point.y,
+      } : null);
+      return;
+    }
+
     // 2. Pencil Draw
     if (isDrawing && tool === 'pencil') {
       const pointer = stage.getPointerPosition();
@@ -570,6 +635,30 @@ export default function Canvas({ stageRef }) {
     const stage = stageRef.current;
     if (stage) {
       stage.container().style.cursor = tool === 'pan' || isSpacePressed ? 'grab' : 'default';
+    }
+
+    if (selectionRect?.visible && tool === 'select') {
+      const stage = stageRef.current;
+      const selectionNode = selectionRectRef.current;
+      const isClickSelection =
+        Math.abs(selectionRect.x2 - selectionRect.x1) < 4 &&
+        Math.abs(selectionRect.y2 - selectionRect.y1) < 4;
+
+      if (!isClickSelection) {
+        const selectionBox = selectionNode?.getClientRect();
+        if (selectionBox && stage) {
+          const nodes = stage.find('.selectable-object');
+          const ids = nodes
+            .filter((node) => Konva.Util.haveIntersection(selectionBox, node.getClientRect()))
+            .map((node) => node.id());
+          setSelectedIds(ids);
+        }
+      } else {
+        setSelectedIds([]);
+      }
+
+      setSelectionRect(null);
+      return;
     }
 
     // Commit drawn line
@@ -832,13 +921,14 @@ export default function Canvas({ stageRef }) {
             const isEditing = editingId === obj.id;
             if (isEditing) return null;
 
-            const isSelected = selectedId === obj.id;
+            const isSelected = selectedIds.includes(obj.id) || selectedId === obj.id;
 
             if (obj.type === 'pencil') {
               return (
                 <Line
                   key={obj.id}
                   id={obj.id}
+                  name="selectable-object"
                   points={obj.points}
                   x={obj.x || 0}
                   y={obj.y || 0}
@@ -851,8 +941,8 @@ export default function Canvas({ stageRef }) {
                   lineCap="round"
                   lineJoin="round"
                   draggable={tool === 'select'}
-                  onClick={() => tool === 'select' && setSelectedId(obj.id)}
-                  onTouchStart={() => tool === 'select' && setSelectedId(obj.id)}
+                  onClick={(e) => updateSelectionFromEvent(obj.id, e)}
+                  onTouchStart={(e) => updateSelectionFromEvent(obj.id, e)}
                   onDragEnd={(e) => {
                     updateObject(obj.id, {
                       x: e.target.x(),
@@ -880,6 +970,7 @@ export default function Canvas({ stageRef }) {
                 <Text
                   key={obj.id}
                   id={obj.id}
+                  name="selectable-object"
                   text={obj.text}
                   x={obj.x}
                   y={obj.y}
@@ -895,8 +986,8 @@ export default function Canvas({ stageRef }) {
                   scaleX={obj.scaleX || 1}
                   scaleY={obj.scaleY || 1}
                   draggable={tool === 'select'}
-                  onClick={() => tool === 'select' && setSelectedId(obj.id)}
-                  onTouchStart={() => tool === 'select' && setSelectedId(obj.id)}
+                  onClick={(e) => updateSelectionFromEvent(obj.id, e)}
+                  onTouchStart={(e) => updateSelectionFromEvent(obj.id, e)}
                   onDblClick={() => handleObjectDoubleClick(obj.id)}
                   onDblTap={() => handleObjectDoubleClick(obj.id)}
                   onDragEnd={(e) => {
@@ -927,7 +1018,7 @@ export default function Canvas({ stageRef }) {
                   key={obj.id}
                   obj={obj}
                   isSelected={isSelected}
-                  onSelect={() => tool === 'select' && setSelectedId(obj.id)}
+                  onSelect={(e) => updateSelectionFromEvent(obj.id, e)}
                   onDoubleClick={() => handleObjectDoubleClick(obj.id)}
                   onChange={(id, updates) => {
                     updateObject(id, updates);
@@ -943,7 +1034,7 @@ export default function Canvas({ stageRef }) {
                   key={obj.id}
                   obj={obj}
                   isSelected={isSelected}
-                  onSelect={() => tool === 'select' && setSelectedId(obj.id)}
+                  onSelect={(e) => updateSelectionFromEvent(obj.id, e)}
                   onChange={(id, updates) => {
                     updateObject(id, updates);
                     saveHistory();
@@ -958,7 +1049,7 @@ export default function Canvas({ stageRef }) {
                   key={obj.id}
                   obj={obj}
                   isSelected={isSelected}
-                  onSelect={() => tool === 'select' && setSelectedId(obj.id)}
+                  onSelect={(e) => updateSelectionFromEvent(obj.id, e)}
                   onChange={(id, updates) => {
                     updateObject(id, updates);
                     saveHistory();
@@ -982,8 +1073,23 @@ export default function Canvas({ stageRef }) {
             />
           )}
 
+          {selectionRect?.visible && (
+            <Rect
+              ref={selectionRectRef}
+              x={Math.min(selectionRect.x1, selectionRect.x2)}
+              y={Math.min(selectionRect.y1, selectionRect.y2)}
+              width={Math.abs(selectionRect.x2 - selectionRect.x1)}
+              height={Math.abs(selectionRect.y2 - selectionRect.y1)}
+              fill="rgba(170, 59, 255, 0.12)"
+              stroke="#aa3bff"
+              strokeWidth={1}
+              dash={[6, 4]}
+              listening={false}
+            />
+          )}
+
           {/* Selection Transformer Layer */}
-          {tool === 'select' && selectedId && !editingId && (
+          {tool === 'select' && (selectedIds.length > 0 || selectedId) && !editingId && (
             <Transformer
               ref={transformerRef}
               boundBoxFunc={(oldBox, newBox) => {
