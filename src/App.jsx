@@ -212,11 +212,14 @@ export default function App() {
       </div>
 
       <aside
-        className={`fixed left-0 top-24 bottom-24 z-30 flex items-center pointer-events-none transition-all duration-300 ${
+        className={`fixed left-0 top-24 bottom-24 z-30 flex flex-col items-center pointer-events-none transition-all duration-300 ${
           isToolbarOpen ? 'translate-x-4' : '-translate-x-full'
         }`}
       >
-        <div className="pointer-events-auto">
+        <div className="pointer-events-auto mt-1">
+          <img src="/pn-logo.png" alt="logo" className="w-9 h-9 rounded-xl shadow-sm" />
+        </div>
+        <div className="flex-1 flex items-center justify-center pointer-events-auto">
           <Toolbar />
         </div>
       </aside>
