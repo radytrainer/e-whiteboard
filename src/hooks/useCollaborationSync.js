@@ -78,8 +78,14 @@ export const useCollaborationSync = ({ onRemoteUpdate } = {}) => {
         }
 
         const payload = await response.json();
-        isApplyingRemoteRef.current = true;
-        replaceObjects(payload.objects || [], { persist: true });
+        
+        // Don't overwrite local state with empty server array if we have local objects
+        const currentObjects = useBoardStore.getState().objects;
+        if (!(payload.objects && payload.objects.length === 0 && currentObjects.length > 0)) {
+          isApplyingRemoteRef.current = true;
+          replaceObjects(payload.objects || [], { persist: true });
+        }
+        
         isHydratedRef.current = true;
         setConnectionState({ mode: 'live', roomId });
       } catch (error) {
@@ -88,6 +94,8 @@ export const useCollaborationSync = ({ onRemoteUpdate } = {}) => {
         }
 
         console.error('Unable to load collaboration room:', error);
+        // Mark as hydrated even on error to allow local-only operation
+        isHydratedRef.current = true;
         setConnectionState({ mode: 'unavailable', roomId });
       }
     };
@@ -102,15 +110,33 @@ export const useCollaborationSync = ({ onRemoteUpdate } = {}) => {
     eventSource.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data);
-        if (!payload || payload.senderId === clientId) {
+        
+        // Skip if payload is empty or if it's from this client
+        if (!payload) {
+          return;
+        }
+        
+        // Skip if this is our own update (senderId matches clientId exactly)
+        if (payload.senderId && payload.senderId === clientId) {
           return;
         }
 
         if (payload.type === 'snapshot' || payload.type === 'board-update') {
-          isApplyingRemoteRef.current = true;
-          replaceObjects(payload.objects || [], { persist: true });
-          isHydratedRef.current = true;
-          onRemoteUpdate?.();
+          // Only apply if we have valid objects
+          // Don't overwrite local state with empty server array if we have local objects
+          if (Array.isArray(payload.objects)) {
+            const currentObjects = useBoardStore.getState().objects;
+            
+            // If server has no objects but we do, skip to preserve local work
+            if (payload.objects.length === 0 && currentObjects.length > 0) {
+              return;
+            }
+            
+            isApplyingRemoteRef.current = true;
+            replaceObjects(payload.objects, { persist: true });
+            isHydratedRef.current = true;
+            onRemoteUpdate?.();
+          }
         }
       } catch (error) {
         console.error('Unable to process collaboration event:', error);
@@ -141,6 +167,9 @@ export const useCollaborationSync = ({ onRemoteUpdate } = {}) => {
 
     const syncRoom = async () => {
       try {
+        // Capture the current objects at time of sync
+        const objectsToSync = useBoardStore.getState().objects;
+        
         const response = await fetch(roomApiUrl, {
           method: 'PUT',
           headers: {
@@ -148,7 +177,7 @@ export const useCollaborationSync = ({ onRemoteUpdate } = {}) => {
           },
           body: JSON.stringify({
             senderId: clientId,
-            objects,
+            objects: objectsToSync,
           }),
           signal: abortController.signal,
         });
@@ -168,9 +197,13 @@ export const useCollaborationSync = ({ onRemoteUpdate } = {}) => {
       }
     };
 
-    syncRoom();
+    // Add a small delay to batch rapid updates
+    const timeoutId = setTimeout(() => {
+      syncRoom();
+    }, 50);
 
     return () => {
+      clearTimeout(timeoutId);
       abortController.abort();
     };
   }, [clientId, objects, roomApiUrl, roomId]);
