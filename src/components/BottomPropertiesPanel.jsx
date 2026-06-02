@@ -104,29 +104,25 @@ export default function BottomPropertiesPanel() {
       {/* ── PENCIL PROPERTIES ── */}
       {tool === 'pencil' && (
         <>
-          <CollapsibleSection title="Pen Size" icon={Pen}>
-            <div className="flex items-center gap-3 min-w-[160px]">
-              <input type="range" min="1" max="20" value={pencilWidth}
-                onChange={(e) => setPencilWidth(parseInt(e.target.value))}
-                className="flex-1 h-1 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-600" />
-              <span className="text-xs font-mono text-zinc-500 w-8 text-right">{pencilWidth}px</span>
-            </div>
-          </CollapsibleSection>
+          <div className="flex items-center gap-3 min-w-[160px]">
+            <input type="range" min="1" max="20" value={pencilWidth}
+              onChange={(e) => setPencilWidth(parseInt(e.target.value))}
+              className="flex-1 h-1 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-600" />
+            <span className="text-xs font-mono text-zinc-500 w-8 text-right">{pencilWidth}px</span>
+          </div>
 
-          <CollapsibleSection title="Pen Color" icon={Pen}>
-            <div className="flex items-center gap-1.5">
-              {colorPalette.map((c) => (
-                <button key={c}
-                  onClick={() => setPencilColor(c)}
-                  style={{ backgroundColor: c }}
-                  className={`w-6 h-6 rounded-full border transition-all duration-150 ${
-                    pencilColor.toLowerCase() === c.toLowerCase()
-                      ? 'border-zinc-800 dark:border-white scale-110 ring-2 ring-purple-600/40'
-                      : 'border-zinc-300 dark:border-zinc-700 hover:scale-105'
-                  }`} />
-              ))}
-            </div>
-          </CollapsibleSection>
+          <div className="flex items-center gap-1.5">
+            {colorPalette.map((c) => (
+              <button key={c}
+                onClick={() => setPencilColor(c)}
+                style={{ backgroundColor: c }}
+                className={`w-6 h-6 rounded-full border transition-all duration-150 ${
+                  pencilColor.toLowerCase() === c.toLowerCase()
+                    ? 'border-zinc-800 dark:border-white scale-110 ring-2 ring-purple-600/40'
+                    : 'border-zinc-300 dark:border-zinc-700 hover:scale-105'
+                }`} />
+            ))}
+          </div>
         </>
       )}
 
