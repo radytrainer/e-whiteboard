@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import { useBoardStore } from '../store/boardStore';
 
 // All math symbols in one flat list for a compact horizontal bar
@@ -15,7 +16,7 @@ const ALL_SYMBOLS = [
 ];
 
 export default function MathToolbar() {
-  const { tool, addObject, textColor, textFont, scale, position } = useBoardStore();
+  const { tool, setTool, addObject, textColor, textFont, scale, position } = useBoardStore();
 
   // Only render when math tool is active
   if (tool !== 'math') return null;
@@ -54,6 +55,15 @@ export default function MathToolbar() {
         ∑ Math
       </span>
       <div className="w-[1px] h-4 bg-zinc-200 dark:bg-zinc-700 mr-1" />
+
+      {/* Close button */}
+      <button
+        onClick={() => setTool('select')}
+        title="Close math symbols"
+        className="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-all mr-1"
+      >
+        <X className="w-3.5 h-3.5" />
+      </button>
 
       {/* Flat list of symbol buttons */}
       {ALL_SYMBOLS.map((sym) => (
