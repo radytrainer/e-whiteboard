@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useBoardStore } from '../store/boardStore';
 
 const DEFAULT_ROOM_ID = 'default';
+const DEFAULT_COLLAB_SERVER_URL = 'https://e-whiteboard-collab.onrender.com';
 
 const sanitizeRoomId = (value) => {
   const cleaned = (value || '')
@@ -26,7 +27,7 @@ const setRoomIdInUrl = (roomId) => {
 
 const getApiBaseUrl = () => {
   const base = import.meta.env.VITE_COLLAB_SERVER_URL;
-  return base ? base.replace(/\/$/, '') : '';
+  return (base || DEFAULT_COLLAB_SERVER_URL).replace(/\/$/, '');
 };
 
 export const useCollaborationSync = ({ onRemoteUpdate } = {}) => {
