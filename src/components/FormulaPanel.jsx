@@ -66,7 +66,7 @@ export default function FormulaPanel({ isOpen, onClose }) {
 
   return (
     <div
-      className={`fixed top-20 right-4 bottom-28 w-80 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-2xl shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50 z-40 flex flex-col transition-all duration-300 transform ${
+      className={`fixed top-4 right-20 bottom-4 w-72 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-2xl shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50 z-40 flex flex-col transition-all duration-300 transform ${
         isOpen ? 'translate-x-0 opacity-100' : 'translate-x-96 opacity-0 pointer-events-none'
       }`}
     >

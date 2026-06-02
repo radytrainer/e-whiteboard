@@ -95,47 +95,6 @@ export default function Toolbar() {
           );
         })}
       </div>
-
-      {/* ── Pencil options ── */}
-      {tool === 'pencil' && (
-        <div className={`${panelCls} w-44`}>
-          <div>
-            <label className={labelCls}>Color</label>
-            <div className="grid grid-cols-5 gap-1.5">
-              {colorPalette.map((c) => (
-                <button key={c} onClick={() => setPencilColor(c)} style={{ backgroundColor: c }}
-                  className={`w-6 h-6 rounded-full border transition-all ${
-                    pencilColor === c ? 'border-zinc-800 dark:border-white scale-110 ring-2 ring-purple-600/30'
-                                     : 'border-zinc-300 dark:border-zinc-700 hover:scale-105'}`} />
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Brush Size</label>
-              <span className="text-xs font-mono text-zinc-500">{pencilWidth}px</span>
-            </div>
-            <input type="range" min="1" max="20" value={pencilWidth}
-              onChange={(e) => setPencilWidth(parseInt(e.target.value))}
-              className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-600" />
-          </div>
-        </div>
-      )}
-
-      {/* ── Eraser options ── */}
-      {tool === 'eraser' && (
-        <div className={`${panelCls} w-44`}>
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Eraser Size</label>
-              <span className="text-xs font-mono text-zinc-500">{eraserWidth}px</span>
-            </div>
-            <input type="range" min="10" max="100" value={eraserWidth}
-              onChange={(e) => setEraserWidth(parseInt(e.target.value))}
-              className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-600" />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

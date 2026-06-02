@@ -54,23 +54,14 @@ export default function InspectorPanel() {
   const showPencilPanel  = tool === 'pencil';
   const showEraserPanel  = tool === 'eraser';
   const showTextPanel    = tool === 'text'   || (tool === 'select' && selectedObj?.type === 'text');
-  const showStickyPanel  = tool === 'sticky' || (tool === 'select' && selectedObj?.type === 'sticky');
   const showShapePanel   = tool === 'shape'  || (tool === 'select' && selectedObj?.type === 'shape');
 
-  if (!showPencilPanel && !showEraserPanel && !showTextPanel && !showStickyPanel && !showShapePanel) {
+  if (!showPencilPanel && !showEraserPanel && !showTextPanel && !showShapePanel) {
     return null;
   }
 
   const colorPalette = [
     '#000000', '#aa3bff', '#3b82f6', '#10b981', '#ef4444', '#f59e0b', '#ec4899',
-  ];
-
-  const stickyColors = [
-    { bg: '#fef08a', name: 'Yellow' },
-    { bg: '#bbf7d0', name: 'Green'  },
-    { bg: '#bfdbfe', name: 'Blue'   },
-    { bg: '#fbcfe8', name: 'Pink'   },
-    { bg: '#fed7aa', name: 'Orange' },
   ];
 
   const fontOptions = [
@@ -93,7 +84,6 @@ export default function InspectorPanel() {
   const activeShapeSides  = (selectedObj?.type === 'shape' ? selectedObj.sides     : undefined) ?? shapeSides;
   const activeShapeStroke = (selectedObj?.type === 'shape' ? selectedObj.stroke    : undefined) ?? shapeStroke;
   const activeShapeFill   = (selectedObj?.type === 'shape' ? selectedObj.fill      : undefined) ?? shapeFill;
-  const activeStickyColor = (selectedObj?.type === 'sticky' ? selectedObj.color    : undefined) ?? stickyColor;
 
   const applyText = (updates) => {
     if (updates.fontColor  !== undefined) setTextColor(updates.fontColor);
@@ -126,11 +116,11 @@ export default function InspectorPanel() {
     : (activeShapeFill.length > 7 && activeShapeFill.endsWith('26'))       ? 'light'
     : 'solid';
 
-  const panelCls = 'bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md rounded-2xl shadow-xl border border-zinc-200/50 dark:border-zinc-800/50 p-4 flex flex-col gap-3.5 transition-all animate-in slide-in-from-right-4 duration-200';
-  const labelCls = 'text-xs font-semibold text-zinc-500 dark:text-zinc-400 block mb-1.5';
+  const panelCls = 'bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md rounded-2xl shadow-xl border border-zinc-200/50 dark:border-zinc-800/50 p-3 flex flex-col gap-2.5 transition-all animate-in slide-in-from-right-4 duration-200';
+  const labelCls = 'text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 block mb-1';
 
   return (
-    <div className={`${panelCls} w-52`}>
+    <div className={`${panelCls} w-44`}>
       {/* ── PENCIL PROPERTIES ── */}
       {showPencilPanel && (
         <>
@@ -138,24 +128,13 @@ export default function InspectorPanel() {
             Pencil Tools
           </div>
           <div>
-            <label className={labelCls}>Pen Color</label>
-            <div className="grid grid-cols-5 gap-1.5">
-              {colorPalette.map((c) => (
-                <button key={c} onClick={() => setPencilColor(c)} style={{ backgroundColor: c }}
-                  className={`w-6 h-6 rounded-full border transition-all ${
-                    pencilColor === c ? 'border-zinc-800 dark:border-white scale-110 ring-2 ring-purple-600/30'
-                                     : 'border-zinc-300 dark:border-zinc-700 hover:scale-105'}`} />
-              ))}
-            </div>
-          </div>
-          <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Brush Size</label>
+              <label className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Brush Size</label>
               <span className="text-xs font-mono text-zinc-500">{pencilWidth}px</span>
             </div>
             <input type="range" min="1" max="20" value={pencilWidth}
               onChange={(e) => setPencilWidth(parseInt(e.target.value))}
-              className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-600" />
+              className="w-full h-1 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-600" />
           </div>
         </>
       )}
@@ -168,40 +147,12 @@ export default function InspectorPanel() {
           </div>
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Eraser Size</label>
+              <label className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Eraser Size</label>
               <span className="text-xs font-mono text-zinc-500">{eraserWidth}px</span>
             </div>
             <input type="range" min="10" max="100" value={eraserWidth}
               onChange={(e) => setEraserWidth(parseInt(e.target.value))}
-              className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-600" />
-          </div>
-        </>
-      )}
-
-      {/* ── STICKY NOTE PROPERTIES ── */}
-      {showStickyPanel && (
-        <>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-purple-500 dark:text-purple-400 font-mono">
-            Note Color
-          </div>
-          <div>
-            <div className="grid grid-cols-5 gap-1.5">
-              {stickyColors.map((colorObj) => (
-                <button key={colorObj.bg}
-                  onClick={() => {
-                    setStickyColor(colorObj.bg);
-                    if (selectedId && selectedObj?.type === 'sticky') {
-                      updateObject(selectedId, { color: colorObj.bg });
-                    }
-                  }}
-                  style={{ backgroundColor: colorObj.bg }}
-                  title={colorObj.name}
-                  className={`w-6 h-6 rounded-md border transition-all ${
-                    activeStickyColor === colorObj.bg
-                      ? 'border-zinc-800 dark:border-white scale-110 ring-2 ring-purple-600/30'
-                      : 'border-zinc-300 dark:border-zinc-700 hover:scale-105'}`} />
-              ))}
-            </div>
+              className="w-full h-1 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-600" />
           </div>
         </>
       )}
@@ -213,34 +164,21 @@ export default function InspectorPanel() {
             Text Style
           </div>
 
-          {/* Color */}
-          <div>
-            <label className={labelCls}>Color</label>
-            <div className="grid grid-cols-5 gap-1.5">
-              {colorPalette.map((c) => (
-                <button key={c} onClick={() => applyText({ fontColor: c })} style={{ backgroundColor: c }}
-                  className={`w-6 h-6 rounded-full border transition-all ${
-                    activeTextColor === c ? 'border-zinc-800 dark:border-white scale-110 ring-2 ring-purple-600/30'
-                                         : 'border-zinc-300 dark:border-zinc-700 hover:scale-105'}`} />
-              ))}
-            </div>
-          </div>
-
           {/* Font size */}
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Font Size</label>
+              <label className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Font Size</label>
               <span className="text-xs font-mono text-zinc-500">{activeTextSize}px</span>
             </div>
             <input type="range" min="12" max="80" value={activeTextSize}
               onChange={(e) => applyText({ fontSize: parseInt(e.target.value) })}
-              className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-600" />
+              className="w-full h-1 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-600" />
           </div>
 
           {/* Bold / Italic / Underline */}
           <div>
             <label className={labelCls}>Style</label>
-            <div className="flex gap-1.5">
+            <div className="flex gap-1">
               {[
                 { icon: Bold,      key: 'isBold',      active: activeIsBold      },
                 { icon: Italic,    key: 'isItalic',    active: activeIsItalic    },
@@ -253,7 +191,7 @@ export default function InspectorPanel() {
                       updateObject(selectedId, { [key]: !active });
                     }
                   }}
-                  className={`flex-1 py-1.5 rounded-lg border flex items-center justify-center transition-all disabled:opacity-40 ${
+                  className={`flex-1 py-1 rounded-lg border flex items-center justify-center transition-all disabled:opacity-40 ${
                     active ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800'
                            : 'bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50'}`}>
                   <Icon className="w-3.5 h-3.5" />
@@ -265,7 +203,7 @@ export default function InspectorPanel() {
           {/* Alignment */}
           <div>
             <label className={labelCls}>Align</label>
-            <div className="flex gap-1.5">
+            <div className="flex gap-1">
               {[
                 { icon: AlignLeft,   val: 'left'   },
                 { icon: AlignCenter, val: 'center' },
@@ -278,7 +216,7 @@ export default function InspectorPanel() {
                       updateObject(selectedId, { align: val });
                     }
                   }}
-                  className={`flex-1 py-1.5 rounded-lg border flex items-center justify-center transition-all disabled:opacity-40 ${
+                  className={`flex-1 py-1 rounded-lg border flex items-center justify-center transition-all disabled:opacity-40 ${
                     activeAlign === val ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800'
                                        : 'bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50'}`}>
                   <Icon className="w-3.5 h-3.5" />
@@ -317,7 +255,7 @@ export default function InspectorPanel() {
           {/* Shape type grid */}
           <div>
             <label className={labelCls}>Shape</label>
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-3 gap-1">
               {[
                 { id: 'square',    label: 'Square',   icon: Square    },
                 { id: 'circle',    label: 'Circle',   icon: Circle    },
@@ -350,32 +288,13 @@ export default function InspectorPanel() {
                       }
                     }}
                     title={s.label}
-                    className={`p-2 rounded-lg border flex flex-col items-center justify-center gap-1 transition-all ${
+                    className={`p-1 rounded-lg border flex flex-col items-center justify-center gap-0.5 transition-all ${
                       isActiveSel
                         ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800 ring-2 ring-purple-600/20'
                         : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}`}>
-                    <ShapeIcon className="w-5 h-5" />
-                    <span className="text-[9px] font-medium">{s.label}</span>
+                    <ShapeIcon className="w-4 h-4" />
+                    <span className="text-[8px] font-medium leading-none">{s.label}</span>
                   </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Border color */}
-          <div>
-            <label className={labelCls}>Border Color</label>
-            <div className="grid grid-cols-5 gap-1.5">
-              {colorPalette.map((c) => {
-                let newFill = activeShapeFill;
-                if (activeShapeFill !== 'transparent') {
-                  newFill = activeShapeFill.endsWith('26') ? `${c}26` : c;
-                }
-                return (
-                  <button key={c} onClick={() => applyShape(c, newFill)} style={{ backgroundColor: c }}
-                    className={`w-6 h-6 rounded-full border transition-all ${
-                      activeShapeStroke === c ? 'border-zinc-800 dark:border-white scale-110 ring-2 ring-purple-600/30'
-                                             : 'border-zinc-300 dark:border-zinc-700 hover:scale-105'}`} />
                 );
               })}
             </div>
@@ -388,7 +307,7 @@ export default function InspectorPanel() {
               {['none', 'light', 'solid'].map((choice) => (
                 <button key={choice}
                   onClick={() => applyShape(undefined, deriveFill(choice))}
-                  className={`py-1 text-[10px] font-semibold rounded-md border text-center capitalize transition-all ${
+                  className={`py-1 text-[9px] font-semibold rounded-md border text-center capitalize transition-all ${
                     currentFillChoice === choice
                       ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800 shadow-sm'
                       : 'bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50'}`}>
