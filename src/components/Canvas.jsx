@@ -719,26 +719,23 @@ export default function Canvas({ stageRef }) {
     if (isDrawing && tool === 'shape' && drawingShapeId) {
       const store = useBoardStore.getState();
       const shapeObj = store.objects.find((o) => o.id === drawingShapeId);
-      if (shapeObj && (shapeObj.width <= 15 || shapeObj.height <= 15)) {
-        // Safe default fallback for simple clicks
-        updateObject(drawingShapeId, {
-          x: shapeStartPos.x - 50,
-          y: shapeStartPos.y - 50,
-          width: 100,
-          height: 100,
-        });
+      if (shapeObj) {
+        const isLinear = shapeObj.shapeType === 'line' || shapeObj.shapeType === 'arrow';
+        const tooSmall = isLinear
+          ? shapeObj.width <= 15                           // lines only need a width check
+          : shapeObj.width <= 15 || shapeObj.height <= 15; // other shapes need both
+        if (tooSmall) {
+          updateObject(drawingShapeId, {
+            x: shapeStartPos.x - (isLinear ? 60 : 50),
+            y: shapeStartPos.y - (isLinear ? 0 : 50),
+            width: isLinear ? 120 : 100,
+            height: isLinear ? 0 : 100,
+          });
+        }
       }
 
-      // Save history after finishing drawing
+      // Save history and stay in shape mode so user can draw more shapes
       saveHistory();
-
-      // Instantly highlight in select mode
-      const finalId = drawingShapeId;
-      setTimeout(() => {
-        store.setTool('select');
-        store.setSelectedId(finalId);
-      }, 50);
-
       setDrawingShapeId(null);
       setShapeStartPos(null);
       return;
@@ -1172,8 +1169,9 @@ export default function Canvas({ stageRef }) {
             <Transformer
               ref={transformerRef}
               boundBoxFunc={(oldBox, newBox) => {
-                // Minimum size constraints
-                if (Math.abs(newBox.width) < 15 || Math.abs(newBox.height) < 15) {
+                // Reject only when BOTH dimensions are tiny (prevents collapsing to a point).
+                // Using && (not ||) so lines (height≈0, width>0) can still be rotated & resized.
+                if (Math.abs(newBox.width) < 5 && Math.abs(newBox.height) < 5) {
                   return oldBox;
                 }
                 return newBox;
