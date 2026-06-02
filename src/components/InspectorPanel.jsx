@@ -19,10 +19,6 @@ export default function InspectorPanel() {
   const {
     tool,
     selectedId,
-    pencilColor,
-    setPencilColor,
-    pencilWidth,
-    setPencilWidth,
     eraserWidth,
     setEraserWidth,
     textColor,
@@ -51,12 +47,11 @@ export default function InspectorPanel() {
   );
 
   // --- Context-aware panel visibility ---
-  const showPencilPanel  = tool === 'pencil';
   const showEraserPanel  = tool === 'eraser';
   const showTextPanel    = tool === 'text'   || (tool === 'select' && selectedObj?.type === 'text');
   const showShapePanel   = tool === 'shape'  || (tool === 'select' && selectedObj?.type === 'shape');
 
-  if (!showPencilPanel && !showEraserPanel && !showTextPanel && !showShapePanel) {
+  if (!showEraserPanel && !showTextPanel && !showShapePanel) {
     return null;
   }
 
@@ -121,24 +116,6 @@ export default function InspectorPanel() {
 
   return (
     <div className={`${panelCls} w-44`}>
-      {/* ── PENCIL PROPERTIES ── */}
-      {showPencilPanel && (
-        <>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-purple-500 dark:text-purple-400 font-mono">
-            Pencil Tools
-          </div>
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Brush Size</label>
-              <span className="text-xs font-mono text-zinc-500">{pencilWidth}px</span>
-            </div>
-            <input type="range" min="1" max="20" value={pencilWidth}
-              onChange={(e) => setPencilWidth(parseInt(e.target.value))}
-              className="w-full h-1 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-600" />
-          </div>
-        </>
-      )}
-
       {/* ── ERASER PROPERTIES ── */}
       {showEraserPanel && (
         <>
