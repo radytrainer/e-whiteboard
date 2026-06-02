@@ -293,6 +293,26 @@ export default function Canvas({ stageRef }) {
   const transformerRef = useRef(null);
   const selectionRectRef = useRef(null);
   const containerRef = useRef(null);
+  // Tracks last touch position for pan-on-touch (movementX/Y don't exist on touch events)
+  const lastTouchPosRef = useRef(null);
+
+  // Auto-center the view whenever the user picks a paper size or changes orientation
+  useEffect(() => {
+    if (paperSize === 'none' || !PAPER_SIZES[paperSize]) return;
+    const dims = PAPER_SIZES[paperSize];
+    const pw = paperOrientation === 'landscape' ? dims.h : dims.w;
+    const ph = paperOrientation === 'landscape' ? dims.w : dims.h;
+    const margin = 80;
+    const newScale = Math.min(
+      (window.innerWidth  - margin * 2) / pw,
+      (window.innerHeight - margin * 2) / ph,
+      1.2 // don't zoom in more than 120%
+    );
+    setScale(newScale);
+    // Paper is centered at canvas (0,0); putting position at screen-center shows it centered
+    setPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paperSize, paperOrientation]);
 
   // Monitor Spacebar state for Pan mode
   useEffect(() => {
@@ -427,12 +447,17 @@ export default function Canvas({ stageRef }) {
 
     if (clickedOnEmpty) {
       setEditingId(null);
+      // Close formula/settings panels when clicking blank canvas
+      window.dispatchEvent(new CustomEvent('canvas-empty-click'));
     }
 
     // 1. Pan Tool or Space Key
     if (tool === 'pan' || isSpacePressed) {
       setIsDraggingStage(true);
       stage.container().style.cursor = 'grabbing';
+      // Record starting touch position so handleStageMouseMove can compute deltas
+      const t = e.evt.touches?.[0];
+      lastTouchPosRef.current = t ? { x: t.clientX, y: t.clientY } : null;
       return;
     }
 
@@ -572,14 +597,21 @@ export default function Canvas({ stageRef }) {
     const stage = stageRef.current;
     if (!stage) return;
 
-    // 1. Pan Board
+    // 1. Pan Board — handle both mouse (movementX) and touch (clientX delta)
     if (isDraggingStage && (tool === 'pan' || isSpacePressed)) {
-      const dx = e.evt.movementX;
-      const dy = e.evt.movementY;
-      setPosition({
-        x: position.x + dx,
-        y: position.y + dy,
-      });
+      let dx = 0, dy = 0;
+      const t = e.evt.touches?.[0];
+      if (t) {
+        // Touch: compute delta from the last recorded position
+        const last = lastTouchPosRef.current;
+        if (last) { dx = t.clientX - last.x; dy = t.clientY - last.y; }
+        lastTouchPosRef.current = { x: t.clientX, y: t.clientY };
+      } else {
+        // Mouse: use movementX/Y (always defined for MouseEvent)
+        dx = e.evt.movementX ?? 0;
+        dy = e.evt.movementY ?? 0;
+      }
+      setPosition({ x: position.x + dx, y: position.y + dy });
       return;
     }
 
@@ -640,6 +672,7 @@ export default function Canvas({ stageRef }) {
 
   const handleStageMouseUp = () => {
     setIsDraggingStage(false);
+    lastTouchPosRef.current = null; // reset touch tracking
     const stage = stageRef.current;
     if (stage) {
       stage.container().style.cursor = tool === 'pan' || isSpacePressed ? 'grab' : 'default';

@@ -122,11 +122,20 @@ export default function App() {
   }, [theme]);
 
   useEffect(() => {
-    const handleOutsideClick = () => {
-      setIsExportDropdownOpen(false);
-    };
+    const handleOutsideClick = () => setIsExportDropdownOpen(false);
     window.addEventListener('click', handleOutsideClick);
     return () => window.removeEventListener('click', handleOutsideClick);
+  }, []);
+
+  // Close all floating panels when the user clicks on blank canvas
+  useEffect(() => {
+    const handleCanvasEmptyClick = () => {
+      setFormulaSubject(null);
+      setIsSettingsOpen(false);
+      setIsExportDropdownOpen(false);
+    };
+    window.addEventListener('canvas-empty-click', handleCanvasEmptyClick);
+    return () => window.removeEventListener('canvas-empty-click', handleCanvasEmptyClick);
   }, []);
 
   return (
