@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useBoardStore } from '../store/boardStore';
-import { X, Sigma, Zap, FlaskConical, Dna, Maximize2 } from 'lucide-react';
+import { X, Sigma, Zap, FlaskConical, Dna, Grid3x3, Maximize2 } from 'lucide-react';
 
 const ELEMENTS = [
   { sym:'H',  name:'Hydrogen',     num:1,  row:1, col:1  },
@@ -207,6 +207,7 @@ const subjectMeta = {
   physics:  { label: 'Physics Formula',  icon: Zap,          color: 'text-blue-600 dark:text-blue-400' },
   chemistry:{ label: 'Chemistry Formula',icon: FlaskConical, color: 'text-emerald-600 dark:text-emerald-400' },
   biology:  { label: 'Biology Formula',  icon: Dna,          color: 'text-amber-600 dark:text-amber-400' },
+  periodic: { label: 'Periodic Table',   icon: Grid3x3,      color: 'text-emerald-600 dark:text-emerald-400' },
 };
 
 const formulasBySubject = {
@@ -420,6 +421,10 @@ export default function FormulaPanel({ subject, onClose }) {
   const meta = subjectMeta[subject];
   const grades = formulasBySubject[subject] || [];
 
+  useEffect(() => {
+    if (subject === 'periodic') setShowPeriodic(true);
+  }, [subject]);
+
   const handleElementInsert = (sym) => {
     const canvasX = (window.innerWidth / 2 - position.x) / scale;
     const canvasY = (window.innerHeight / 2 - position.y) / scale;
@@ -481,48 +486,68 @@ export default function FormulaPanel({ subject, onClose }) {
 
       {/* Body List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-5">
-        {grades.map((grade) => (
-          <div key={grade.grade} className="space-y-2">
+        {subject === 'periodic' ? (
+          <div className="space-y-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
-              {grade.grade}
+              Reference
             </h3>
-            <div className="space-y-2">
-              {grade.formulas.map((f) => {
-                const isPT = f.name.includes('Periodic Table');
-                return (
-                  <button
-                    key={f.name}
-                    onClick={() => isPT ? setShowPeriodic(true) : insertFormula(f.equation)}
-                    draggable={!isPT}
-                    onDragStart={(e) => {
-                      if (isPT) return;
-                      e.dataTransfer.setData('source', 'math-formula');
-                      e.dataTransfer.setData('text/plain', f.equation);
-                      e.dataTransfer.effectAllowed = 'copy';
-                    }}
-                    className={`w-full text-left p-3 rounded-xl border group transition-all ${
-                      isPT
-                        ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 cursor-pointer'
-                        : 'bg-zinc-50 dark:bg-zinc-950/40 hover:bg-purple-50 dark:hover:bg-purple-950/20 border-zinc-200/50 dark:border-zinc-800/50 cursor-grab active:cursor-grabbing'
-                    }`}
-                  >
-                    <div className={`text-xs font-semibold flex items-center gap-1.5 ${
-                      isPT ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-500 dark:text-zinc-400 group-hover:text-purple-600 dark:group-hover:text-purple-400'
-                    } transition-colors`}>
-                      {isPT && <Maximize2 className="w-3.5 h-3.5" />}
-                      {f.name}
-                    </div>
-                    <div className={`mt-1 text-md font-mono font-medium overflow-x-auto whitespace-nowrap ${
-                      isPT ? 'text-emerald-700 dark:text-emerald-300' : 'text-zinc-800 dark:text-zinc-200'
-                    }`}>
-                      {isPT ? 'View full periodic table →' : f.equation}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+            <button
+              onClick={() => setShowPeriodic(true)}
+              className="w-full text-left p-3 rounded-xl border bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 cursor-pointer transition-all group"
+            >
+              <div className="text-xs font-semibold flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 transition-colors">
+                <Grid3x3 className="w-3.5 h-3.5" />
+                Open Periodic Table
+              </div>
+              <div className="mt-1 text-md font-mono font-medium text-emerald-700 dark:text-emerald-300">
+                View all 118 elements →
+              </div>
+            </button>
           </div>
-        ))}
+        ) : (
+          grades.map((grade) => (
+            <div key={grade.grade} className="space-y-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+                {grade.grade}
+              </h3>
+              <div className="space-y-2">
+                {grade.formulas.map((f) => {
+                  const isPT = f.name.includes('Periodic Table');
+                  return (
+                    <button
+                      key={f.name}
+                      onClick={() => isPT ? setShowPeriodic(true) : insertFormula(f.equation)}
+                      draggable={!isPT}
+                      onDragStart={(e) => {
+                        if (isPT) return;
+                        e.dataTransfer.setData('source', 'math-formula');
+                        e.dataTransfer.setData('text/plain', f.equation);
+                        e.dataTransfer.effectAllowed = 'copy';
+                      }}
+                      className={`w-full text-left p-3 rounded-xl border group transition-all ${
+                        isPT
+                          ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 cursor-pointer'
+                          : 'bg-zinc-50 dark:bg-zinc-950/40 hover:bg-purple-50 dark:hover:bg-purple-950/20 border-zinc-200/50 dark:border-zinc-800/50 cursor-grab active:cursor-grabbing'
+                      }`}
+                    >
+                      <div className={`text-xs font-semibold flex items-center gap-1.5 ${
+                        isPT ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-500 dark:text-zinc-400 group-hover:text-purple-600 dark:group-hover:text-purple-400'
+                      } transition-colors`}>
+                        {isPT && <Maximize2 className="w-3.5 h-3.5" />}
+                        {f.name}
+                      </div>
+                      <div className={`mt-1 text-md font-mono font-medium overflow-x-auto whitespace-nowrap ${
+                        isPT ? 'text-emerald-700 dark:text-emerald-300' : 'text-zinc-800 dark:text-zinc-200'
+                      }`}>
+                        {isPT ? 'View full periodic table →' : f.equation}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
 

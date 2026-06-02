@@ -17,6 +17,7 @@ import {
   Zap,
   FlaskConical,
   Dna,
+  Grid3x3,
   Settings as SettingsIcon,
   ChevronDown,
   PanelLeftClose,
@@ -170,6 +171,7 @@ export default function App() {
             { id: 'physics',  icon: Zap,          color: 'text-blue-600 dark:text-blue-400',     title: 'Physics Formula' },
             { id: 'chemistry',icon: FlaskConical, color: 'text-emerald-600 dark:text-emerald-400',title: 'Chemistry Formula' },
             { id: 'biology',  icon: Dna,          color: 'text-amber-600 dark:text-amber-400',   title: 'Biology Formula' },
+            { id: 'periodic', icon: Grid3x3,      color: 'text-emerald-600 dark:text-emerald-400',title: 'Periodic Table' },
           ].map((s) => {
             const Icon = s.icon;
             const isActive = formulaSubject === s.id;
