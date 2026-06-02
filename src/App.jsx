@@ -281,7 +281,7 @@ export default function App() {
       </div>
 
       <div className="fixed top-3 left-4 z-40">
-        <img src="/rady-logo.png" alt="logo" className="w-9 h-9 rounded-xl shadow-sm" />
+        <img src="/rady-logo.png" alt="logo" className="h-11 w-auto rounded-xl shadow-sm object-contain" />
       </div>
 
       <aside
