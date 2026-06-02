@@ -13,23 +13,16 @@ import { useBoardStore } from './store/boardStore';
 import { exportPNG } from './utils/exportPNG';
 import { exportPDF } from './utils/exportPDF';
 import { 
-  ZoomIn, 
-  ZoomOut, 
-  RotateCcw, 
   Download, 
   BookOpen, 
   Settings as SettingsIcon, 
   ChevronDown,
-  ChevronUp,
   Sparkles
 } from 'lucide-react';
 
 export default function App() {
   const {
     theme,
-    scale,
-    setScale,
-    resetView
   } = useBoardStore();
 
   const stageRef = useRef(null);
@@ -83,20 +76,7 @@ export default function App() {
     localStorage.setItem('math-khmer-whiteboard-title', newTitle);
   };
 
-  const handleZoomIn = () => {
-    const newScale = Math.min(15, scale * 1.15);
-    setScale(newScale);
-  };
 
-  const handleZoomOut = () => {
-    const newScale = Math.max(0.15, scale / 1.15);
-    setScale(newScale);
-  };
-
-  const handleResetZoom = () => {
-    resetView();
-    showNotification('Stage view reset');
-  };
 
   return (
     <div className="w-screen h-screen flex flex-col overflow-hidden bg-zinc-50 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-100 transition-colors duration-300">
@@ -244,7 +224,7 @@ export default function App() {
         <Canvas stageRef={stageRef} />
       </main>
 
-      {/* BOTTOM QUICK MATH TOOLBAR & COLOR BAR */}
+      {/* BOTTOM CENTER: COLOR BAR + MATH TOOLBAR (auto-shows when math tool active) */}
       <footer className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-30 pointer-events-none flex flex-col items-center gap-2.5">
         <div className="pointer-events-auto">
           <ColorBar />
@@ -254,42 +234,9 @@ export default function App() {
         </div>
       </footer>
 
-      {/* BOTTOM ACTIONS (UNDO/REDO/DELETE) */}
-      <div className="fixed bottom-4 left-4 z-30 pointer-events-auto">
+      {/* BOTTOM RIGHT: COMBINED ZOOM + UNDO/REDO/DELETE (collapsible) */}
+      <div className="fixed bottom-4 right-4 z-30 pointer-events-auto">
         <BottomActions />
-      </div>
-
-      {/* FLOATING ZOOM CONTROLS (BOTTOM RIGHT) */}
-      <div className="fixed bottom-4 right-4 z-30 pointer-events-auto flex items-center gap-1 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md p-1 rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl">
-        <button
-          onClick={handleZoomOut}
-          title="Zoom Out (Ctrl + Wheel)"
-          className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all focus:outline-none cursor-pointer"
-        >
-          <ZoomOut className="w-4 h-4" />
-        </button>
-        <button
-          onClick={handleResetZoom}
-          title="Reset View"
-          className="px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-mono font-bold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all focus:outline-none cursor-pointer"
-        >
-          {Math.round(scale * 100)}%
-        </button>
-        <button
-          onClick={handleZoomIn}
-          title="Zoom In (Ctrl + Wheel)"
-          className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all focus:outline-none cursor-pointer"
-        >
-          <ZoomIn className="w-4 h-4" />
-        </button>
-        <div className="w-[1px] h-4 bg-zinc-300 dark:bg-zinc-800 mx-0.5" />
-        <button
-          onClick={handleResetZoom}
-          title="Recenter"
-          className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-all cursor-pointer"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-        </button>
       </div>
     </div>
   );

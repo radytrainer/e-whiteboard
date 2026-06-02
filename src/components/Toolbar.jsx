@@ -7,7 +7,8 @@ import {
   Type, 
   StickyNote, 
   Image as ImageIcon,
-  Shapes
+  Shapes,
+  Sigma
 } from 'lucide-react';
 import { useBoardStore } from '../store/boardStore';
 
@@ -35,6 +36,7 @@ export default function Toolbar() {
     { id: 'sticky', name: 'Sticky Note',  icon: StickyNote,   shortcut: 'N' },
     { id: 'image',  name: 'Insert Image', icon: ImageIcon,    shortcut: 'I' },
     { id: 'shape',  name: 'Shapes',       icon: Shapes,       shortcut: 'S' },
+    { id: 'math',   name: 'Math Symbols', icon: Sigma,        shortcut: 'M' },
   ];
 
   const colorPalette = [
