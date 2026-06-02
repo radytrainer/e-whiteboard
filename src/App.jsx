@@ -27,10 +27,8 @@ import {
   Check,
 } from 'lucide-react';
 
-const DEFAULT_TITLE = 'Math Whiteboard - Lesson 1';
-const getDefaultTitleForRoom = (roomId, defaultRoomId, getRoomTitleKey) =>
-  localStorage.getItem(getRoomTitleKey(roomId)) ||
-  (roomId === defaultRoomId ? DEFAULT_TITLE : `Shared Whiteboard - ${roomId}`);
+const getExportTitle = (roomId, defaultRoomId) =>
+  roomId === defaultRoomId ? 'whiteboard' : `whiteboard-${roomId}`;
 
 export default function App() {
   const { theme } = useBoardStore();
@@ -41,7 +39,7 @@ export default function App() {
     setNotification(message);
   };
 
-  const { roomId, shareLink, syncStatus, setRoomId, sanitizeRoomId, getRoomTitleKey, defaultRoomId } =
+  const { roomId, shareLink, syncStatus, setRoomId, sanitizeRoomId, defaultRoomId } =
     useCollaborationSync({
       onRemoteUpdate: () => showNotification('Whiteboard updated in real time'),
     });
@@ -52,9 +50,10 @@ export default function App() {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isNavOpen, setIsNavOpen] = useState(true);
   const [isToolbarOpen, setIsToolbarOpen] = useState(true);
-  const [title, setTitle] = useState(() => getDefaultTitleForRoom(roomId, defaultRoomId, getRoomTitleKey));
   const [roomInput, setRoomInput] = useState(roomId);
   const [isCopied, setIsCopied] = useState(false);
+
+  const exportTitle = getExportTitle(roomId, defaultRoomId);
 
   useEffect(() => {
     if (!notification) return;
@@ -87,16 +86,10 @@ export default function App() {
     return () => window.removeEventListener('click', handleOutsideClick);
   }, []);
 
-  const handleTitleChange = (newTitle) => {
-    setTitle(newTitle);
-    localStorage.setItem(getRoomTitleKey(roomId), newTitle);
-  };
-
   const handleRoomJoin = () => {
     const nextRoomId = sanitizeRoomId(roomInput);
     setRoomId(nextRoomId);
     setRoomInput(nextRoomId);
-    setTitle(getDefaultTitleForRoom(nextRoomId, defaultRoomId, getRoomTitleKey));
     showNotification(nextRoomId === defaultRoomId ? 'Opened your solo board' : `Joined room ${nextRoomId}`);
   };
 
@@ -121,17 +114,6 @@ export default function App() {
           <span>{notification}</span>
         </div>
       )}
-
-      <div className="fixed left-1/2 top-4 z-30 -translate-x-1/2 rounded-2xl border border-zinc-200/60 bg-white/88 px-4 py-2 shadow-lg backdrop-blur-md dark:border-zinc-800/60 dark:bg-zinc-900/88">
-        <input
-          value={title}
-          onChange={(e) => handleTitleChange(e.target.value)}
-          className="w-[18rem] max-w-[45vw] bg-transparent text-sm font-semibold text-zinc-900 outline-none dark:text-zinc-100"
-        />
-        <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
-          Room: {roomId === defaultRoomId ? 'solo board' : roomId} • {syncStatus}
-        </div>
-      </div>
 
       <div className="fixed top-4 right-4 z-40 flex flex-col items-center gap-0 transition-all duration-300">
         <button
@@ -170,7 +152,7 @@ export default function App() {
                 </div>
                 <button
                   onClick={() => {
-                    exportPNG(stageRef.current, { transparent: false, fileName: `${title}.png` });
+                    exportPNG(stageRef.current, { transparent: false, fileName: `${exportTitle}.png` });
                     showNotification('PNG image downloaded');
                     setIsExportDropdownOpen(false);
                   }}
@@ -180,7 +162,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => {
-                    exportPNG(stageRef.current, { transparent: true, fileName: `${title}_transparent.png` });
+                    exportPNG(stageRef.current, { transparent: true, fileName: `${exportTitle}_transparent.png` });
                     showNotification('Transparent PNG downloaded');
                     setIsExportDropdownOpen(false);
                   }}
@@ -196,7 +178,7 @@ export default function App() {
                 </div>
                 <button
                   onClick={() => {
-                    exportPDF(stageRef.current, { fileName: `${title}.pdf`, multiPage: false });
+                    exportPDF(stageRef.current, { fileName: `${exportTitle}.pdf`, multiPage: false });
                     showNotification('PDF document downloaded');
                     setIsExportDropdownOpen(false);
                   }}
@@ -206,7 +188,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => {
-                    exportPDF(stageRef.current, { fileName: `${title}_notebook.pdf`, multiPage: true });
+                    exportPDF(stageRef.current, { fileName: `${exportTitle}_notebook.pdf`, multiPage: true });
                     showNotification('Multi-page A4 PDF downloaded');
                     setIsExportDropdownOpen(false);
                   }}
@@ -244,6 +226,9 @@ export default function App() {
                   <div>
                     <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Live collaboration</div>
                     <div className="text-xs text-zinc-500 dark:text-zinc-400">{syncStatus}</div>
+                    <div className="text-[11px] text-zinc-400 dark:text-zinc-500">
+                      Room: {roomId === defaultRoomId ? 'solo board' : roomId}
+                    </div>
                   </div>
                   <div className="rounded-full bg-purple-100 p-2 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400">
                     <Users className="h-4 w-4" />
@@ -286,7 +271,7 @@ export default function App() {
                 </label>
 
                 <p className="text-[11px] leading-5 text-zinc-500 dark:text-zinc-400">
-                  Open the same room link in another browser tab or window on this app to see updates happen live.
+                  Share this room link with other people. When anyone adds, edits, or deletes on the board, everyone in the same room sees it live.
                 </p>
               </div>
             )}
