@@ -9,7 +9,6 @@ import InspectorPanel from './components/InspectorPanel';
 import BottomActions from './components/BottomActions';
 import ColorBar from './components/ColorBar';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import { useCollaborationSync } from './hooks/useCollaborationSync';
 import { useBoardStore } from './store/boardStore';
 import { exportPNG } from './utils/exportPNG';
 import { exportPDF } from './utils/exportPDF';
@@ -21,14 +20,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Sparkles,
-  Share2,
-  Users,
-  Copy,
-  Check,
 } from 'lucide-react';
-
-const getExportTitle = (roomId, defaultRoomId) =>
-  roomId === defaultRoomId ? 'whiteboard' : `whiteboard-${roomId}`;
 
 export default function App() {
   const { theme } = useBoardStore();
@@ -39,33 +31,19 @@ export default function App() {
     setNotification(message);
   };
 
-  const { roomId, shareLink, syncStatus, setRoomId, sanitizeRoomId, defaultRoomId } =
-    useCollaborationSync({
-      onRemoteUpdate: () => showNotification('Whiteboard updated in real time'),
-    });
-
   const [isFormulaOpen, setIsFormulaOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
-  const [isShareOpen, setIsShareOpen] = useState(false);
   const [isNavOpen, setIsNavOpen] = useState(true);
   const [isToolbarOpen, setIsToolbarOpen] = useState(true);
-  const [roomInput, setRoomInput] = useState(roomId);
-  const [isCopied, setIsCopied] = useState(false);
 
-  const exportTitle = getExportTitle(roomId, defaultRoomId);
+  const exportTitle = 'whiteboard';
 
   useEffect(() => {
     if (!notification) return;
     const timer = setTimeout(() => setNotification(null), 2500);
     return () => clearTimeout(timer);
   }, [notification]);
-
-  useEffect(() => {
-    if (!isCopied) return;
-    const timer = setTimeout(() => setIsCopied(false), 1600);
-    return () => clearTimeout(timer);
-  }, [isCopied]);
 
   useKeyboardShortcuts(showNotification);
 
@@ -80,29 +58,10 @@ export default function App() {
   useEffect(() => {
     const handleOutsideClick = () => {
       setIsExportDropdownOpen(false);
-      setIsShareOpen(false);
     };
     window.addEventListener('click', handleOutsideClick);
     return () => window.removeEventListener('click', handleOutsideClick);
   }, []);
-
-  const handleRoomJoin = () => {
-    const nextRoomId = sanitizeRoomId(roomInput);
-    setRoomId(nextRoomId);
-    setRoomInput(nextRoomId);
-    showNotification(nextRoomId === defaultRoomId ? 'Opened your solo board' : `Joined room ${nextRoomId}`);
-  };
-
-  const handleCopyShareLink = async () => {
-    try {
-      await navigator.clipboard.writeText(shareLink);
-      setIsCopied(true);
-      showNotification('Share link copied');
-    } catch (error) {
-      console.error('Unable to copy share link:', error);
-      showNotification('Unable to copy share link');
-    }
-  };
 
   return (
     <div className="w-screen h-screen flex flex-col overflow-hidden bg-zinc-50 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-100 transition-colors duration-300">
@@ -200,82 +159,7 @@ export default function App() {
             )}
           </div>
 
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsShareOpen(!isShareOpen);
-                setIsExportDropdownOpen(false);
-              }}
-              title="Share Whiteboard"
-              className={`cursor-pointer rounded-xl border p-2.5 transition-all focus:outline-none ${
-                isShareOpen
-                  ? 'border-purple-200 bg-purple-100 text-purple-600 shadow-inner dark:border-purple-800 dark:bg-purple-950/40 dark:text-purple-400'
-                  : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/50'
-              }`}
-            >
-              <Share2 className="h-5 w-5" />
-            </button>
 
-            {isShareOpen && (
-              <div
-                onClick={(e) => e.stopPropagation()}
-                className="absolute right-full top-0 z-50 mr-2 flex w-72 flex-col gap-3 rounded-2xl border border-zinc-200/50 bg-white p-3 shadow-2xl animate-in slide-in-from-right-2 duration-150 dark:border-zinc-800/50 dark:bg-zinc-900"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Live collaboration</div>
-                    <div className="text-xs text-zinc-500 dark:text-zinc-400">{syncStatus}</div>
-                    <div className="text-[11px] text-zinc-400 dark:text-zinc-500">
-                      Room: {roomId === defaultRoomId ? 'solo board' : roomId}
-                    </div>
-                  </div>
-                  <div className="rounded-full bg-purple-100 p-2 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400">
-                    <Users className="h-4 w-4" />
-                  </div>
-                </div>
-
-                <label className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Room name</span>
-                  <input
-                    value={roomInput}
-                    onChange={(e) => setRoomInput(e.target.value)}
-                    placeholder="algebra-group-a"
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm outline-none focus:border-purple-400 dark:border-zinc-800 dark:bg-zinc-950"
-                  />
-                </label>
-
-                <button
-                  onClick={handleRoomJoin}
-                  className="w-full cursor-pointer rounded-xl bg-purple-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-700"
-                >
-                  {roomId === defaultRoomId ? 'Start shared room' : 'Switch room'}
-                </button>
-
-                <label className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Share link</span>
-                  <div className="flex items-center gap-2">
-                    <input
-                      readOnly
-                      value={shareLink}
-                      className="min-w-0 flex-1 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-500 outline-none dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400"
-                    />
-                    <button
-                      onClick={handleCopyShareLink}
-                      title="Copy link"
-                      className="cursor-pointer rounded-xl border border-zinc-200 p-2 text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800/50"
-                    >
-                      {isCopied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </label>
-
-                <p className="text-[11px] leading-5 text-zinc-500 dark:text-zinc-400">
-                  Share this room link with other people. When anyone adds, edits, or deletes on the board, everyone in the same room sees it live.
-                </p>
-              </div>
-            )}
-          </div>
 
           <div className="my-1 h-[1px] w-8 bg-zinc-200 dark:bg-zinc-800" />
 
