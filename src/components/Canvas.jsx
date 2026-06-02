@@ -122,16 +122,22 @@ function RenderStickyNote({ obj, onSelect, onDoubleClick, onChange }) {
         fill="rgba(255,255,255,0.4)"
         rotation={-2}
       />
-      {/* Text Inside Note */}
+      {/* Text Inside Note — respects formatting set from BottomPropertiesPanel */}
       <Text
         text={obj.text}
         width={obj.width}
         height={obj.height}
         padding={15}
         fontSize={obj.fontSize || 18}
-        fontFamily="'Inter', 'Kantumruy Pro', sans-serif"
+        fontFamily={
+          !obj.fontFamily || obj.fontFamily === 'Inter'
+            ? "'Inter', 'Kantumruy Pro', sans-serif"
+            : obj.fontFamily
+        }
         fill={obj.fontColor || '#1f2937'}
-        align="center"
+        fontStyle={[obj.isBold && 'bold', obj.isItalic && 'italic'].filter(Boolean).join(' ') || 'normal'}
+        textDecoration={obj.isUnderline ? 'underline' : ''}
+        align={obj.align || 'center'}
         verticalAlign="middle"
         wrap="char"
       />

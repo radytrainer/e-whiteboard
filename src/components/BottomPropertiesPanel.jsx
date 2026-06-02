@@ -2,9 +2,33 @@ import { useMemo } from 'react';
 import {
   Square, Circle, Triangle, Minus, Hexagon, ArrowRight,
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
-  Pen, Type, Shapes,
+  Pen, Type, Shapes, StickyNote,
 } from 'lucide-react';
 import { useBoardStore } from '../store/boardStore';
+
+// Pastel background swatches for sticky notes
+const STICKY_BG_COLORS = [
+  { hex: '#fef08a', label: 'Yellow'  },
+  { hex: '#fbcfe8', label: 'Pink'    },
+  { hex: '#bfdbfe', label: 'Blue'    },
+  { hex: '#bbf7d0', label: 'Green'   },
+  { hex: '#e9d5ff', label: 'Purple'  },
+  { hex: '#fed7aa', label: 'Orange'  },
+  { hex: '#fca5a5', label: 'Red'     },
+  { hex: '#d9f99d', label: 'Lime'    },
+];
+
+// Emoji groups for the sticky note picker
+const EMOJI_GROUPS = [
+  {
+    label: 'Mood',
+    emojis: ['😊','😄','😍','😎','🤩','😅','🥺','😢','😔','😡','😤','🤔','😴','😂','💪','🎉'],
+  },
+  {
+    label: 'Marks',
+    emojis: ['❤️','⭐','🔥','💡','✅','❌','📌','🎯','👍','👎','⚡','💯','📚','✏️','🔖','💬'],
+  },
+];
 
 export default function BottomPropertiesPanel() {
   const {
@@ -13,6 +37,7 @@ export default function BottomPropertiesPanel() {
     textColor, setTextColor, textSize, setTextSize, textFont, setTextFont,
     shapeType, setShapeType, shapeSides, setShapeSides,
     shapeStroke, setShapeStroke, shapeFill, setShapeFill,
+    stickyColor, setStickyColor,
     updateObject,
   } = useBoardStore();
 
@@ -21,16 +46,16 @@ export default function BottomPropertiesPanel() {
     [objects, selectedId]
   );
 
-  // Also surface the panel in select mode when the user has a shape/text selected.
+  // Show panel for active tool OR when the matching object type is selected
   const showPencil = tool === 'pencil';
-  const showText   = tool === 'text'  || (tool === 'select' && selectedObj?.type === 'text');
-  const showShape  = tool === 'shape' || (tool === 'select' && selectedObj?.type === 'shape');
+  const showText   = tool === 'text'   || (tool === 'select' && selectedObj?.type === 'text');
+  const showShape  = tool === 'shape'  || (tool === 'select' && selectedObj?.type === 'shape');
+  const showSticky = tool === 'sticky' || (tool === 'select' && selectedObj?.type === 'sticky');
 
-  if (!showPencil && !showText && !showShape) return null;
+  if (!showPencil && !showText && !showShape && !showSticky) return null;
 
-  const colorPalette = [
-    '#000000', '#aa3bff', '#3b82f6', '#10b981', '#ef4444', '#f59e0b', '#ec4899',
-  ];
+  // ── shared palettes / options ──────────────────────────────────────────────
+  const colorPalette = ['#1f2937','#aa3bff','#3b82f6','#10b981','#ef4444','#f59e0b','#ec4899'];
 
   const fontOptions = [
     { label: 'Inter',  value: 'Inter'         },
@@ -39,6 +64,7 @@ export default function BottomPropertiesPanel() {
     { label: 'Mono',   value: 'monospace'      },
   ];
 
+  // ── text ──────────────────────────────────────────────────────────────────
   const activeTextColor   = (selectedObj?.type === 'text' ? selectedObj.fontColor  : undefined) ?? textColor;
   const activeTextSize    = (selectedObj?.type === 'text' ? selectedObj.fontSize   : undefined) ?? textSize;
   const activeFontFamily  = (selectedObj?.type === 'text' ? selectedObj.fontFamily : undefined) ?? textFont;
@@ -47,17 +73,18 @@ export default function BottomPropertiesPanel() {
   const activeIsUnderline = selectedObj?.type === 'text' ? !!selectedObj.isUnderline : false;
   const activeAlign       = selectedObj?.type === 'text' ? (selectedObj.align || 'left') : 'left';
 
-  const activeShapeType   = (selectedObj?.type === 'shape' ? selectedObj.shapeType : undefined) ?? shapeType;
-  const activeShapeSides  = (selectedObj?.type === 'shape' ? selectedObj.sides     : undefined) ?? shapeSides;
-  const activeShapeStroke = (selectedObj?.type === 'shape' ? selectedObj.stroke    : undefined) ?? shapeStroke;
-  const activeShapeFill   = (selectedObj?.type === 'shape' ? selectedObj.fill      : undefined) ?? shapeFill;
-
   const applyText = (updates) => {
     if (updates.fontColor  !== undefined) setTextColor(updates.fontColor);
     if (updates.fontSize   !== undefined) setTextSize(updates.fontSize);
     if (updates.fontFamily !== undefined) setTextFont(updates.fontFamily);
     if (selectedId && selectedObj?.type === 'text') updateObject(selectedId, updates);
   };
+
+  // ── shape ─────────────────────────────────────────────────────────────────
+  const activeShapeType   = (selectedObj?.type === 'shape' ? selectedObj.shapeType : undefined) ?? shapeType;
+  const activeShapeSides  = (selectedObj?.type === 'shape' ? selectedObj.sides     : undefined) ?? shapeSides;
+  const activeShapeStroke = (selectedObj?.type === 'shape' ? selectedObj.stroke    : undefined) ?? shapeStroke;
+  const activeShapeFill   = (selectedObj?.type === 'shape' ? selectedObj.fill      : undefined) ?? shapeFill;
 
   const applyShape = (strokeColor, fillValue) => {
     if (strokeColor !== undefined) setShapeStroke(strokeColor);
@@ -77,14 +104,35 @@ export default function BottomPropertiesPanel() {
   };
 
   const currentFillChoice =
-    activeShapeFill === 'transparent'                                ? 'none'
+    activeShapeFill === 'transparent'                                 ? 'none'
     : (activeShapeFill.length > 7 && activeShapeFill.endsWith('26')) ? 'light'
     : 'solid';
 
-  const headerLabel = showPencil ? 'Pencil' : showText ? 'Text' : 'Shape';
-  const ToolIcon    = showPencil ? Pen : showText ? Type : Shapes;
+  // ── sticky note ───────────────────────────────────────────────────────────
+  const activeStickyBg        = (selectedObj?.type === 'sticky' ? selectedObj.color      : undefined) ?? stickyColor;
+  const activeStickyFontColor = (selectedObj?.type === 'sticky' ? selectedObj.fontColor  : undefined) ?? '#1f2937';
+  const activeStickyFont      = (selectedObj?.type === 'sticky' ? selectedObj.fontFamily : undefined) ?? 'Inter';
+  const activeStickySize      = (selectedObj?.type === 'sticky' ? selectedObj.fontSize   : undefined) ?? 18;
+  const activeStickyBold      = selectedObj?.type === 'sticky' ? !!selectedObj.isBold      : false;
+  const activeStickyItalic    = selectedObj?.type === 'sticky' ? !!selectedObj.isItalic    : false;
+  const activeStickyUnderline = selectedObj?.type === 'sticky' ? !!selectedObj.isUnderline : false;
+  const activeStickyAlign     = selectedObj?.type === 'sticky' ? (selectedObj.align || 'center') : 'center';
 
-  const colorBtn = (color, isActive, onClick) => (
+  const applySticky = (updates) => {
+    if (updates.color !== undefined) setStickyColor(updates.color);
+    if (selectedId && selectedObj?.type === 'sticky') updateObject(selectedId, updates);
+  };
+
+  const insertEmoji = (emoji) => {
+    if (!selectedId || selectedObj?.type !== 'sticky') return;
+    updateObject(selectedId, { text: (selectedObj.text || '') + emoji });
+  };
+
+  // ── ui helpers ────────────────────────────────────────────────────────────
+  const headerLabel = showPencil ? 'Pencil' : showText ? 'Text' : showShape ? 'Shape' : 'Sticky Note';
+  const ToolIcon    = showPencil ? Pen : showText ? Type : showShape ? Shapes : StickyNote;
+
+  const colorDot = (color, isActive, onClick) => (
     <button
       key={color}
       onClick={onClick}
@@ -97,14 +145,65 @@ export default function BottomPropertiesPanel() {
     />
   );
 
-  const divider = <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-0.5" />;
+  // Shared button style for B/I/U + alignment + font buttons
+  const fmtBtn = (active) =>
+    `rounded-lg border flex items-center justify-center transition-all disabled:opacity-40 ${
+      active
+        ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800'
+        : 'bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+    }`;
+
+  const vbar = <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-700 mx-0.5" />;
+  const hbar = <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-0.5" />;
+
+  // Formatting row — shared between text and sticky sections
+  const FormatRow = ({ getActive, getAlign, onToggle, onAlign, onFont, activeFont, disabled }) => (
+    <div className="flex items-center gap-1 flex-wrap">
+      {[
+        { icon: Bold,      key: 'isBold'      },
+        { icon: Italic,    key: 'isItalic'    },
+        { icon: Underline, key: 'isUnderline' },
+      ].map(({ icon: Icon, key }) => (
+        <button key={key} disabled={disabled}
+          onClick={() => onToggle(key)}
+          className={`w-9 h-9 ${fmtBtn(getActive(key))}`}>
+          <Icon className="w-4 h-4" />
+        </button>
+      ))}
+
+      {vbar}
+
+      {[
+        { icon: AlignLeft,   val: 'left'   },
+        { icon: AlignCenter, val: 'center' },
+        { icon: AlignRight,  val: 'right'  },
+      ].map(({ icon: Icon, val }) => (
+        <button key={val} disabled={disabled}
+          onClick={() => onAlign(val)}
+          className={`w-9 h-9 ${fmtBtn(getAlign() === val)}`}>
+          <Icon className="w-4 h-4" />
+        </button>
+      ))}
+
+      {vbar}
+
+      {fontOptions.map((f) => (
+        <button key={f.value} disabled={disabled}
+          onClick={() => onFont(f.value)}
+          style={{ fontFamily: f.value }}
+          className={`px-2.5 h-9 text-[11px] font-semibold ${fmtBtn(activeFont === f.value)}`}>
+          {f.label}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <div className="
       bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md
       rounded-2xl shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50
       p-3 flex flex-col gap-2.5
-      w-[min(95vw,560px)]
+      w-[min(95vw,600px)]
       animate-in slide-in-from-bottom-4 duration-200 pointer-events-auto
     ">
       {/* Header */}
@@ -115,24 +214,20 @@ export default function BottomPropertiesPanel() {
         </span>
       </div>
 
-      {divider}
+      {hbar}
 
       {/* ── PENCIL ── */}
       {showPencil && (
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-semibold text-zinc-400 w-7 shrink-0">Size</span>
-            <input
-              type="range" min="1" max="20" value={pencilWidth}
+            <input type="range" min="1" max="20" value={pencilWidth}
               onChange={(e) => setPencilWidth(parseInt(e.target.value))}
-              className="flex-1 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full appearance-none cursor-pointer accent-purple-600"
-            />
+              className="flex-1 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full appearance-none cursor-pointer accent-purple-600" />
             <span className="text-[11px] font-mono text-zinc-500 w-8 text-right">{pencilWidth}px</span>
           </div>
           <div className="flex gap-1.5 flex-wrap">
-            {colorPalette.map((c) =>
-              colorBtn(c, pencilColor.toLowerCase() === c.toLowerCase(), () => setPencilColor(c))
-            )}
+            {colorPalette.map((c) => colorDot(c, pencilColor.toLowerCase() === c.toLowerCase(), () => setPencilColor(c)))}
           </div>
         </div>
       )}
@@ -140,76 +235,26 @@ export default function BottomPropertiesPanel() {
       {/* ── TEXT ── */}
       {showText && (
         <div className="flex flex-col gap-2">
-          {/* Size slider */}
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-semibold text-zinc-400 w-7 shrink-0">Size</span>
-            <input
-              type="range" min="12" max="80" value={activeTextSize}
+            <input type="range" min="12" max="80" value={activeTextSize}
               onChange={(e) => applyText({ fontSize: parseInt(e.target.value) })}
-              className="flex-1 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full appearance-none cursor-pointer accent-purple-600"
-            />
+              className="flex-1 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full appearance-none cursor-pointer accent-purple-600" />
             <span className="text-[11px] font-mono text-zinc-500 w-8 text-right">{activeTextSize}px</span>
           </div>
 
-          {/* Style + Align + Fonts — wraps cleanly on mobile */}
-          <div className="flex items-center gap-1 flex-wrap">
-            {[
-              { icon: Bold,      key: 'isBold',      active: activeIsBold      },
-              { icon: Italic,    key: 'isItalic',    active: activeIsItalic    },
-              { icon: Underline, key: 'isUnderline', active: activeIsUnderline },
-            ].map(({ icon: Icon, key, active }) => (
-              <button key={key}
-                disabled={!selectedId || selectedObj?.type !== 'text'}
-                onClick={() => selectedId && selectedObj?.type === 'text' && updateObject(selectedId, { [key]: !active })}
-                className={`w-9 h-9 rounded-lg border flex items-center justify-center transition-all disabled:opacity-40 ${
-                  active
-                    ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800'
-                    : 'bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800'
-                }`}>
-                <Icon className="w-4 h-4" />
-              </button>
-            ))}
+          <FormatRow
+            getActive={(k) => ({ isBold: activeIsBold, isItalic: activeIsItalic, isUnderline: activeIsUnderline }[k])}
+            getAlign={() => activeAlign}
+            onToggle={(k) => selectedId && selectedObj?.type === 'text' && applyText({ [k]: !({ isBold: activeIsBold, isItalic: activeIsItalic, isUnderline: activeIsUnderline }[k]) })}
+            onAlign={(v) => selectedId && selectedObj?.type === 'text' && applyText({ align: v })}
+            onFont={(v) => applyText({ fontFamily: v })}
+            activeFont={activeFontFamily}
+            disabled={!selectedId || selectedObj?.type !== 'text'}
+          />
 
-            <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-700 mx-0.5" />
-
-            {[
-              { icon: AlignLeft,   val: 'left'   },
-              { icon: AlignCenter, val: 'center' },
-              { icon: AlignRight,  val: 'right'  },
-            ].map(({ icon: Icon, val }) => (
-              <button key={val}
-                disabled={!selectedId || selectedObj?.type !== 'text'}
-                onClick={() => selectedId && selectedObj?.type === 'text' && updateObject(selectedId, { align: val })}
-                className={`w-9 h-9 rounded-lg border flex items-center justify-center transition-all disabled:opacity-40 ${
-                  activeAlign === val
-                    ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800'
-                    : 'bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800'
-                }`}>
-                <Icon className="w-4 h-4" />
-              </button>
-            ))}
-
-            <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-700 mx-0.5" />
-
-            {fontOptions.map((f) => (
-              <button key={f.value}
-                onClick={() => applyText({ fontFamily: f.value })}
-                style={{ fontFamily: f.value }}
-                className={`px-2.5 h-9 text-[11px] font-semibold rounded-lg border transition-all ${
-                  activeFontFamily === f.value
-                    ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800'
-                    : 'bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800'
-                }`}>
-                {f.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Colors */}
           <div className="flex gap-1.5 flex-wrap">
-            {colorPalette.map((c) =>
-              colorBtn(c, activeTextColor.toLowerCase() === c.toLowerCase(), () => applyText({ fontColor: c }))
-            )}
+            {colorPalette.map((c) => colorDot(c, activeTextColor.toLowerCase() === c.toLowerCase(), () => applyText({ fontColor: c })))}
           </div>
         </div>
       )}
@@ -217,7 +262,6 @@ export default function BottomPropertiesPanel() {
       {/* ── SHAPE ── */}
       {showShape && (
         <div className="flex flex-col gap-2">
-          {/* Shape type — 4 cols on mobile, 7 on wider */}
           <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
             {[
               { id: 'square',    label: 'Square',   icon: Square     },
@@ -239,8 +283,7 @@ export default function BottomPropertiesPanel() {
                     else setShapeType(s.id);
                     if (selectedId && selectedObj?.type === 'shape') {
                       updateObject(selectedId, s.id.startsWith('polygon')
-                        ? { shapeType: 'polygon', sides: s.sides }
-                        : { shapeType: s.id });
+                        ? { shapeType: 'polygon', sides: s.sides } : { shapeType: s.id });
                     }
                   }}
                   title={s.label}
@@ -256,7 +299,6 @@ export default function BottomPropertiesPanel() {
             })}
           </div>
 
-          {/* Fill + Color — wraps on narrow screens */}
           <div className="flex items-center gap-2 flex-wrap">
             <div className="flex gap-1">
               {['none', 'light', 'solid'].map((choice) => (
@@ -271,17 +313,96 @@ export default function BottomPropertiesPanel() {
                 </button>
               ))}
             </div>
-
             <div className="w-px h-5 bg-zinc-200 dark:bg-zinc-700" />
-
             <div className="flex gap-1.5 flex-wrap">
               {colorPalette.map((c) =>
-                colorBtn(c, activeShapeStroke.toLowerCase() === c.toLowerCase(),
-                  () => applyShape(c, deriveFill(currentFillChoice === 'none' ? 'none' : currentFillChoice))
-                )
+                colorDot(c, activeShapeStroke.toLowerCase() === c.toLowerCase(),
+                  () => applyShape(c, deriveFill(currentFillChoice === 'none' ? 'none' : currentFillChoice)))
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── STICKY NOTE ── */}
+      {showSticky && (
+        <div className="flex flex-col gap-2.5">
+          {/* Background color swatches */}
+          <div>
+            <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 block mb-1.5">Background</span>
+            <div className="flex gap-1.5 flex-wrap">
+              {STICKY_BG_COLORS.map(({ hex }) => (
+                <button
+                  key={hex}
+                  onClick={() => applySticky({ color: hex })}
+                  title={hex}
+                  style={{ backgroundColor: hex }}
+                  className={`w-7 h-7 rounded-lg border-2 transition-all ${
+                    activeStickyBg.toLowerCase() === hex.toLowerCase()
+                      ? 'border-zinc-800 dark:border-white scale-110 ring-2 ring-purple-500/40'
+                      : 'border-zinc-300 dark:border-zinc-600 hover:scale-105'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Font size */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-semibold text-zinc-400 w-7 shrink-0">Size</span>
+            <input type="range" min="10" max="48" value={activeStickySize}
+              onChange={(e) => applySticky({ fontSize: parseInt(e.target.value) })}
+              className="flex-1 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full appearance-none cursor-pointer accent-purple-600" />
+            <span className="text-[11px] font-mono text-zinc-500 w-8 text-right">{activeStickySize}px</span>
+          </div>
+
+          {/* Text formatting */}
+          <FormatRow
+            getActive={(k) => ({ isBold: activeStickyBold, isItalic: activeStickyItalic, isUnderline: activeStickyUnderline }[k])}
+            getAlign={() => activeStickyAlign}
+            onToggle={(k) => {
+              const cur = { isBold: activeStickyBold, isItalic: activeStickyItalic, isUnderline: activeStickyUnderline };
+              applySticky({ [k]: !cur[k] });
+            }}
+            onAlign={(v) => applySticky({ align: v })}
+            onFont={(v) => applySticky({ fontFamily: v })}
+            activeFont={activeStickyFont}
+            disabled={!selectedId || selectedObj?.type !== 'sticky'}
+          />
+
+          {/* Text color */}
+          <div>
+            <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 block mb-1.5">Text Color</span>
+            <div className="flex gap-1.5 flex-wrap">
+              {colorPalette.map((c) =>
+                colorDot(c, activeStickyFontColor.toLowerCase() === c.toLowerCase(), () => applySticky({ fontColor: c }))
+              )}
+            </div>
+          </div>
+
+          {hbar}
+
+          {/* Emoji picker */}
+          {EMOJI_GROUPS.map((group) => (
+            <div key={group.label}>
+              <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block mb-1">
+                {group.label}
+              </span>
+              <div className="flex gap-0.5 flex-wrap">
+                {group.emojis.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => insertEmoji(emoji)}
+                    disabled={!selectedId || selectedObj?.type !== 'sticky'}
+                    title={`Add ${emoji}`}
+                    className="w-9 h-9 flex items-center justify-center text-lg rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-30 active:scale-90"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
