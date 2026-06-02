@@ -23,7 +23,70 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Sparkles,
+  Trash2,
+  X,
+  CheckSquare,
 } from 'lucide-react';
+
+// Floating action bar that appears on mobile/tablet when objects are selected.
+// Gives touch users a visible Delete button (no keyboard Delete key on mobile).
+function SelectionBar() {
+  const { selectedIds, selectedId, deleteObject, setSelectedIds, setSelectedId, tool, objects, selectAll } = useBoardStore();
+  const count = selectedIds.length > 1 ? selectedIds.length : selectedId ? 1 : 0;
+
+  if (tool !== 'select' || count === 0) return null;
+
+  const handleDelete = () => {
+    deleteObject();
+  };
+
+  const handleDeselect = () => {
+    setSelectedIds([]);
+    setSelectedId(null);
+  };
+
+  return (
+    <div className="flex items-center gap-1.5 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-2xl shadow-xl border border-zinc-200/50 dark:border-zinc-800/50 px-3 py-2 pointer-events-auto animate-in slide-in-from-bottom-4 duration-200">
+      {/* Count badge */}
+      <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 select-none whitespace-nowrap">
+        {count} item{count !== 1 ? 's' : ''} selected
+      </span>
+
+      <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-0.5" />
+
+      {/* Select All (if not already all selected) */}
+      {count < objects.length && (
+        <button
+          onClick={selectAll}
+          title="Select all"
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+        >
+          <CheckSquare className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">All</span>
+        </button>
+      )}
+
+      {/* Delete */}
+      <button
+        onClick={handleDelete}
+        title="Delete selected (Del)"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs font-semibold border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-950/50 active:scale-95 transition-all"
+      >
+        <Trash2 className="w-3.5 h-3.5" />
+        Delete
+      </button>
+
+      {/* Deselect */}
+      <button
+        onClick={handleDeselect}
+        title="Deselect"
+        className="w-7 h-7 flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+      >
+        <X className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+}
 
 export default function App() {
   const { theme } = useBoardStore();
@@ -96,7 +159,6 @@ export default function App() {
               onClick={(e) => {
                 e.stopPropagation();
                 setIsExportDropdownOpen(!isExportDropdownOpen);
-                setIsShareOpen(false);
               }}
               title="Export Canvas"
               className="flex cursor-pointer items-center justify-center rounded-xl bg-purple-600 p-2.5 font-medium text-white shadow-md shadow-purple-500/10 transition-all hover:bg-purple-700 focus:outline-none"
@@ -161,8 +223,6 @@ export default function App() {
               </div>
             )}
           </div>
-
-
 
           <div className="my-1 h-[1px] w-8 bg-zinc-200 dark:bg-zinc-800" />
 
@@ -243,6 +303,8 @@ export default function App() {
       </main>
 
       <footer className="fixed bottom-4 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-2.5 pointer-events-none">
+        {/* Selection actions bar — visible when items are selected (mobile delete) */}
+        <SelectionBar />
         <div className="pointer-events-auto">
           <BottomPropertiesPanel />
         </div>

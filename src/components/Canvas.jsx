@@ -351,15 +351,20 @@ export default function Canvas({ stageRef }) {
   const updateSelectionFromEvent = (id, event) => {
     if (tool !== 'select') return;
 
+    // On mobile/touch: if this object is already part of a multi-selection,
+    // preserve the group so the Transformer can drag all nodes together.
+    const curIds = useBoardStore.getState().selectedIds;
+    if (curIds.length > 1 && curIds.includes(id)) return;
+
     const isMultiSelect = event?.evt?.shiftKey || event?.evt?.ctrlKey || event?.evt?.metaKey;
     if (!isMultiSelect) {
       setSelectedId(id);
       return;
     }
 
-    const nextIds = selectedIds.includes(id)
-      ? selectedIds.filter((selectedItemId) => selectedItemId !== id)
-      : [...selectedIds, id];
+    const nextIds = curIds.includes(id)
+      ? curIds.filter((selectedItemId) => selectedItemId !== id)
+      : [...curIds, id];
 
     setSelectedIds(nextIds);
   };
@@ -687,7 +692,7 @@ export default function Canvas({ stageRef }) {
           height: 100,
         });
       }
-      
+
       // Save history after finishing drawing
       saveHistory();
 
@@ -701,6 +706,19 @@ export default function Canvas({ stageRef }) {
       setDrawingShapeId(null);
       setShapeStartPos(null);
       return;
+    }
+
+    // Multi-select group drag position sync.
+    // Konva's Transformer moves all attached nodes visually but only the directly
+    // touched node fires onDragEnd. Read every selected node's current Konva
+    // position and write it back to the store so they don't snap back on re-render.
+    const { selectedIds: groupIds } = useBoardStore.getState();
+    if (tool === 'select' && groupIds.length > 1 && stage) {
+      groupIds.forEach((gid) => {
+        const node = stage.findOne('#' + gid);
+        if (node) updateObject(gid, { x: node.x(), y: node.y() });
+      });
+      saveHistory();
     }
   };
 
