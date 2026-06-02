@@ -123,6 +123,8 @@ const ELEMENTS = [
 ];
 
 function PeriodicTableModal({ onClose, onInsert }) {
+  const gridStyle = { display: 'grid', gridTemplateColumns: 'repeat(18, minmax(0, 1fr))', gap: '1px' };
+
   const cellCls = (el) => {
     if (!el) return 'bg-transparent';
     let bg = 'bg-zinc-100 dark:bg-zinc-800 hover:bg-purple-200 dark:hover:bg-purple-800';
@@ -157,8 +159,6 @@ function PeriodicTableModal({ onClose, onInsert }) {
     }
     rows.push(<div key={r} style={gridStyle}>{cells}</div>);
   }
-
-  const gridStyle = { display: 'grid', gridTemplateColumns: 'repeat(18, minmax(0, 1fr))', gap: '1px' };
 
   const lanAct = (arr, label) => {
     if (!arr || arr.length === 0) return null;
