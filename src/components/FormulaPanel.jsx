@@ -6,7 +6,7 @@ export default function FormulaPanel({ isOpen, onClose }) {
 
   const formulaCategories = [
     {
-      title: 'Math',
+      title: 'Math Formula',
       formulas: [
         { name: 'Pythagorean Theorem', equation: 'a² + b² = c²' },
         { name: 'Quadratic Formula', equation: 'x = (-b ± √(b² − 4ac)) / 2a' },
@@ -16,7 +16,7 @@ export default function FormulaPanel({ isOpen, onClose }) {
       ],
     },
     {
-      title: 'Physics',
+      title: 'Physics Formula',
       formulas: [
         { name: "Newton's Second Law", equation: 'F = ma' },
         { name: "Einstein's Equation", equation: 'E = mc²' },
@@ -26,7 +26,7 @@ export default function FormulaPanel({ isOpen, onClose }) {
       ],
     },
     {
-      title: 'Chemistry',
+      title: 'Chemistry Formula',
       formulas: [
         { name: 'Ideal Gas Law', equation: 'PV = nRT' },
         { name: 'pH Formula', equation: 'pH = -log[H⁺]' },
@@ -36,7 +36,7 @@ export default function FormulaPanel({ isOpen, onClose }) {
       ],
     },
     {
-      title: 'Biology',
+      title: 'Biology Formula',
       formulas: [
         { name: 'Hardy-Weinberg', equation: 'p² + 2pq + q² = 1' },
         { name: 'Cellular Respiration', equation: 'C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + ATP' },
