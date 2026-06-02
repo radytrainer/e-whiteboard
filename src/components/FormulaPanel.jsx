@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useBoardStore } from '../store/boardStore';
-import { X, Sigma, Zap, FlaskConical, Dna, Grid3x3, Maximize2 } from 'lucide-react';
+import { X, Sigma, Zap, FlaskConical, Dna, Grid3x3 } from 'lucide-react';
 
 const ELEMENTS = [
   { sym:'H',  name:'Hydrogen',     num:1,  row:1, col:1  },
@@ -316,12 +316,6 @@ const formulasBySubject = {
   ],
   chemistry: [
     {
-      grade: 'Reference',
-      formulas: [
-        { name: '📐 Periodic Table', equation: 'Click to view & insert element symbols' },
-      ],
-    },
-    {
       grade: 'Grade 7',
       formulas: [
         { name: 'States of Matter', equation: 'Solid → Liquid → Gas' },
@@ -511,39 +505,26 @@ export default function FormulaPanel({ subject, onClose }) {
                 {grade.grade}
               </h3>
               <div className="space-y-2">
-                {grade.formulas.map((f) => {
-                  const isPT = f.name.includes('Periodic Table');
-                  return (
-                    <button
-                      key={f.name}
-                      onClick={() => isPT ? setShowPeriodic(true) : insertFormula(f.equation)}
-                      draggable={!isPT}
-                      onDragStart={(e) => {
-                        if (isPT) return;
-                        e.dataTransfer.setData('source', 'math-formula');
-                        e.dataTransfer.setData('text/plain', f.equation);
-                        e.dataTransfer.effectAllowed = 'copy';
-                      }}
-                      className={`w-full text-left p-3 rounded-xl border group transition-all ${
-                        isPT
-                          ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 cursor-pointer'
-                          : 'bg-zinc-50 dark:bg-zinc-950/40 hover:bg-purple-50 dark:hover:bg-purple-950/20 border-zinc-200/50 dark:border-zinc-800/50 cursor-grab active:cursor-grabbing'
-                      }`}
-                    >
-                      <div className={`text-xs font-semibold flex items-center gap-1.5 ${
-                        isPT ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-500 dark:text-zinc-400 group-hover:text-purple-600 dark:group-hover:text-purple-400'
-                      } transition-colors`}>
-                        {isPT && <Maximize2 className="w-3.5 h-3.5" />}
-                        {f.name}
-                      </div>
-                      <div className={`mt-1 text-md font-mono font-medium overflow-x-auto whitespace-nowrap ${
-                        isPT ? 'text-emerald-700 dark:text-emerald-300' : 'text-zinc-800 dark:text-zinc-200'
-                      }`}>
-                        {isPT ? 'View full periodic table →' : f.equation}
-                      </div>
-                    </button>
-                  );
-                })}
+                {grade.formulas.map((f) => (
+                  <button
+                    key={f.name}
+                    onClick={() => insertFormula(f.equation)}
+                    draggable={true}
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('source', 'math-formula');
+                      e.dataTransfer.setData('text/plain', f.equation);
+                      e.dataTransfer.effectAllowed = 'copy';
+                    }}
+                    className="w-full text-left bg-zinc-50 dark:bg-zinc-950/40 hover:bg-purple-50 dark:hover:bg-purple-950/20 p-3 rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 group transition-all cursor-grab active:cursor-grabbing"
+                  >
+                    <div className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                      {f.name}
+                    </div>
+                    <div className="mt-1 text-md font-mono font-medium text-zinc-800 dark:text-zinc-200 overflow-x-auto whitespace-nowrap">
+                      {f.equation}
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
           ))
