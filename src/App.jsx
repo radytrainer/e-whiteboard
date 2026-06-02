@@ -281,7 +281,7 @@ export default function App() {
       </div>
 
       <div className="fixed top-3 left-4 z-40">
-        <img src="/pn-logo.png" alt="logo" className="w-9 h-9 rounded-xl shadow-sm" />
+        <img src="/rady-logo.png" alt="logo" className="w-9 h-9 rounded-xl shadow-sm" />
       </div>
 
       <aside
