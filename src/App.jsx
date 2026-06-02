@@ -5,7 +5,6 @@ import MathToolbar from './components/MathToolbar';
 import FormulaPanel from './components/FormulaPanel';
 import SettingsPanel from './components/SettingsPanel';
 import ImageUploader from './components/ImageUploader';
-import InspectorPanel from './components/InspectorPanel';
 import BottomActions from './components/BottomActions';
 import BottomPropertiesPanel from './components/BottomPropertiesPanel';
 import ColorBar from './components/ColorBar';
@@ -215,12 +214,6 @@ export default function App() {
       >
         {isToolbarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
       </button>
-
-      <aside className="fixed right-4 top-24 bottom-24 z-30 flex flex-col justify-center pointer-events-none">
-        <div className="pointer-events-auto">
-          <InspectorPanel />
-        </div>
-      </aside>
 
       <FormulaPanel isOpen={isFormulaOpen} onClose={() => setIsFormulaOpen(false)} />
       <SettingsPanel isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
