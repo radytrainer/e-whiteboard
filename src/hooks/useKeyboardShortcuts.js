@@ -7,6 +7,8 @@ export const useKeyboardShortcuts = (onShowNotification) => {
   const deleteObject = useBoardStore((s) => s.deleteObject);
   const duplicateObject = useBoardStore((s) => s.duplicateObject);
   const saveBoardState = useBoardStore((s) => s.saveBoardState);
+  const selectAll = useBoardStore((s) => s.selectAll);
+  const setTool = useBoardStore((s) => s.setTool);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -38,6 +40,11 @@ export const useKeyboardShortcuts = (onShowNotification) => {
         e.preventDefault();
         saveBoardState();
         if (onShowNotification) onShowNotification('Board saved offline!');
+      } else if (isCtrl && key === 'a') {
+        e.preventDefault();
+        setTool('select');
+        selectAll();
+        if (onShowNotification) onShowNotification('All objects selected');
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
         deleteObject();
@@ -53,5 +60,5 @@ export const useKeyboardShortcuts = (onShowNotification) => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [undo, redo, deleteObject, duplicateObject, saveBoardState, onShowNotification]);
+  }, [undo, redo, deleteObject, duplicateObject, saveBoardState, selectAll, setTool, onShowNotification]);
 };

@@ -44,6 +44,7 @@ export const useBoardStore = create((set, get) => {
     // Stage State
     objects: getSavedObjects(),
     selectedId: null,
+    selectedIds: [], // multi-select
     tool: 'select', // 'select' | 'pan' | 'pencil' | 'eraser' | 'text' | 'sticky' | 'image'
     
     // Canvas View State
@@ -78,8 +79,15 @@ export const useBoardStore = create((set, get) => {
     // ACTIONS
     // ----------------------------------------------------
 
-    setTool: (tool) => set({ tool, selectedId: null }),
-    setSelectedId: (selectedId) => set({ selectedId }),
+    setTool: (tool) => set({ tool, selectedId: null, selectedIds: [] }),
+    setSelectedId: (selectedId) => set({ selectedId, selectedIds: selectedId ? [selectedId] : [] }),
+    setSelectedIds: (selectedIds) => set({ selectedIds, selectedId: selectedIds[0] ?? null }),
+
+    selectAll: () => {
+      const { objects } = get();
+      const ids = objects.map((o) => o.id);
+      set({ selectedIds: ids, selectedId: ids[0] ?? null });
+    },
     
     setScale: (scale) => set({ scale }),
     setPosition: (position) => set({ position }),
@@ -226,17 +234,27 @@ export const useBoardStore = create((set, get) => {
     },
 
     deleteObject: (id) => {
-      const targetId = id || get().selectedId;
-      if (!targetId) return;
+      // Support single id, selectedId, OR all selectedIds
+      const { selectedId, selectedIds } = get();
+      const targets = id
+        ? [id]
+        : selectedIds.length > 0
+        ? selectedIds
+        : selectedId
+        ? [selectedId]
+        : [];
+
+      if (targets.length === 0) return;
 
       get().saveHistory();
 
       set((state) => {
-        const remaining = state.objects.filter((obj) => obj.id !== targetId);
+        const remaining = state.objects.filter((obj) => !targets.includes(obj.id));
         localStorage.setItem('math-khmer-whiteboard-objects', JSON.stringify(remaining));
         return {
           objects: remaining,
-          selectedId: state.selectedId === targetId ? null : state.selectedId,
+          selectedId: null,
+          selectedIds: [],
         };
       });
     },

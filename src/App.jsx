@@ -17,6 +17,10 @@ import {
   BookOpen, 
   Settings as SettingsIcon, 
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen,
   Sparkles
 } from 'lucide-react';
 
@@ -31,6 +35,8 @@ export default function App() {
   const [isFormulaOpen, setIsFormulaOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
+  const [isNavOpen, setIsNavOpen] = useState(true);       // top-right nav collapse
+  const [isToolbarOpen, setIsToolbarOpen] = useState(true); // left sidebar collapse
   
   // Title of Whiteboard
   const [title, setTitle] = useState(() => {
@@ -93,120 +99,142 @@ export default function App() {
       )}
 
 
-      {/* FLOATING ACTION NAVBAR (TOP RIGHT) */}
-      <div className="fixed top-4 right-4 z-40 flex flex-col gap-2 bg-white/85 dark:bg-zinc-900/85 backdrop-blur-md rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl p-2 items-center">
-        {/* Export Dropdown */}
-        <div className="relative">
+      {/* FLOATING ACTION NAVBAR (TOP RIGHT) — collapsible */}
+      <div className="fixed top-4 right-4 z-40 flex flex-col items-center gap-0 transition-all duration-300">
+        {/* Collapse / Expand toggle */}
+        <button
+          onClick={() => setIsNavOpen(!isNavOpen)}
+          title={isNavOpen ? 'Collapse Menu' : 'Expand Menu'}
+          className="p-1.5 rounded-full bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border border-zinc-200/50 dark:border-zinc-800/50 shadow-lg text-zinc-400 hover:text-purple-600 dark:hover:text-purple-400 transition-all cursor-pointer mb-1.5"
+        >
+          <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isNavOpen ? 'rotate-0' : 'rotate-180'}`} />
+        </button>
+
+        {/* Nav body */}
+        <div className={`flex flex-col gap-2 bg-white/85 dark:bg-zinc-900/85 backdrop-blur-md rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl p-2 items-center transition-all duration-300 origin-top ${
+          isNavOpen ? 'scale-y-100 opacity-100' : 'scale-y-0 opacity-0 pointer-events-none h-0 p-0 overflow-hidden'
+        }`}>
+          {/* Export Dropdown */}
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExportDropdownOpen(!isExportDropdownOpen);
+              }}
+              title="Export Canvas"
+              className="p-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium transition-all shadow-md shadow-purple-500/10 focus:outline-none flex items-center justify-center cursor-pointer"
+            >
+              <Download className="w-5 h-5" />
+            </button>
+
+            {isExportDropdownOpen && (
+              <div 
+                onClick={(e) => e.stopPropagation()} 
+                className="absolute right-full top-0 mr-2 w-52 bg-white dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 rounded-2xl shadow-2xl p-2 z-50 flex flex-col gap-1 transition-all animate-in slide-in-from-right-2 duration-150"
+              >
+                <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+                  Images (PNG)
+                </div>
+                <button
+                  onClick={() => {
+                    exportPNG(stageRef.current, { transparent: false, fileName: `${title}.png` });
+                    showNotification('PNG image downloaded');
+                    setIsExportDropdownOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-lg transition-all cursor-pointer"
+                >
+                  Standard Whiteboard
+                </button>
+                <button
+                  onClick={() => {
+                    exportPNG(stageRef.current, { transparent: true, fileName: `${title}_transparent.png` });
+                    showNotification('Transparent PNG downloaded');
+                    setIsExportDropdownOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-lg transition-all cursor-pointer"
+                >
+                  Transparent Gridless
+                </button>
+                
+                <div className="h-[1px] bg-zinc-100 dark:bg-zinc-800 my-1" />
+
+                <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+                  Documents (PDF)
+                </div>
+                <button
+                  onClick={() => {
+                    exportPDF(stageRef.current, { fileName: `${title}.pdf`, multiPage: false });
+                    showNotification('PDF document downloaded');
+                    setIsExportDropdownOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-lg transition-all cursor-pointer"
+                >
+                  Single Page (A4 Landscape)
+                </button>
+                <button
+                  onClick={() => {
+                    exportPDF(stageRef.current, { fileName: `${title}_notebook.pdf`, multiPage: true });
+                    showNotification('Multi-page A4 PDF downloaded');
+                    setIsExportDropdownOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-lg transition-all cursor-pointer"
+                >
+                  Multi-Page Lesson (3 Pages)
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="w-8 h-[1px] bg-zinc-200 dark:bg-zinc-800 my-1" />
+
+          {/* Formulas Panel Trigger */}
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsExportDropdownOpen(!isExportDropdownOpen);
+            onClick={() => {
+              setIsFormulaOpen(!isFormulaOpen);
+              setIsSettingsOpen(false);
             }}
-            title="Export Canvas"
-            className="p-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium transition-all shadow-md shadow-purple-500/10 focus:outline-none flex items-center justify-center cursor-pointer"
+            title="Formula Templates"
+            className={`p-2.5 rounded-xl border transition-all focus:outline-none cursor-pointer ${
+              isFormulaOpen 
+                ? 'bg-purple-100 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800 shadow-inner' 
+                : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
+            }`}
           >
-            <Download className="w-5 h-5" />
+            <BookOpen className="w-5 h-5" />
           </button>
 
-          {isExportDropdownOpen && (
-            <div 
-              onClick={(e) => e.stopPropagation()} 
-              className="absolute right-full top-0 mr-2 w-52 bg-white dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 rounded-2xl shadow-2xl p-2 z-50 flex flex-col gap-1 transition-all animate-in slide-in-from-right-2 duration-150"
-            >
-              <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
-                Images (PNG)
-              </div>
-              <button
-                onClick={() => {
-                  exportPNG(stageRef.current, { transparent: false, fileName: `${title}.png` });
-                  showNotification('PNG image downloaded');
-                  setIsExportDropdownOpen(false);
-                }}
-                className="w-full text-left px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-lg transition-all cursor-pointer"
-              >
-                Standard Whiteboard
-              </button>
-              <button
-                onClick={() => {
-                  exportPNG(stageRef.current, { transparent: true, fileName: `${title}_transparent.png` });
-                  showNotification('Transparent PNG downloaded');
-                  setIsExportDropdownOpen(false);
-                }}
-                className="w-full text-left px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-lg transition-all cursor-pointer"
-              >
-                Transparent Gridless
-              </button>
-              
-              <div className="h-[1px] bg-zinc-100 dark:bg-zinc-800 my-1" />
-
-              <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
-                Documents (PDF)
-              </div>
-              <button
-                onClick={() => {
-                  exportPDF(stageRef.current, { fileName: `${title}.pdf`, multiPage: false });
-                  showNotification('PDF document downloaded');
-                  setIsExportDropdownOpen(false);
-                }}
-                className="w-full text-left px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-lg transition-all cursor-pointer"
-              >
-                Single Page (A4 Landscape)
-              </button>
-              <button
-                onClick={() => {
-                  exportPDF(stageRef.current, { fileName: `${title}_notebook.pdf`, multiPage: true });
-                  showNotification('Multi-page A4 PDF downloaded');
-                  setIsExportDropdownOpen(false);
-                }}
-                className="w-full text-left px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-lg transition-all cursor-pointer"
-              >
-                Multi-Page Lesson (3 Pages)
-              </button>
-            </div>
-          )}
+          {/* Settings Panel Trigger */}
+          <button
+            onClick={() => {
+              setIsSettingsOpen(!isSettingsOpen);
+              setIsFormulaOpen(false);
+            }}
+            title="Appearance Settings"
+            className={`p-2.5 rounded-xl border transition-all focus:outline-none cursor-pointer ${
+              isSettingsOpen 
+                ? 'bg-purple-100 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800 shadow-inner' 
+                : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
+            }`}
+          >
+            <SettingsIcon className="w-5 h-5" />
+          </button>
         </div>
-
-        <div className="w-8 h-[1px] bg-zinc-200 dark:bg-zinc-800 my-1" />
-
-        {/* Formulas Panel Trigger */}
-        <button
-          onClick={() => {
-            setIsFormulaOpen(!isFormulaOpen);
-            setIsSettingsOpen(false);
-          }}
-          title="Formula Templates"
-          className={`p-2.5 rounded-xl border transition-all focus:outline-none cursor-pointer ${
-            isFormulaOpen 
-              ? 'bg-purple-100 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800 shadow-inner' 
-              : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
-          }`}
-        >
-          <BookOpen className="w-5 h-5" />
-        </button>
-
-        {/* Settings Panel Trigger */}
-        <button
-          onClick={() => {
-            setIsSettingsOpen(!isSettingsOpen);
-            setIsFormulaOpen(false);
-          }}
-          title="Appearance Settings"
-          className={`p-2.5 rounded-xl border transition-all focus:outline-none cursor-pointer ${
-            isSettingsOpen 
-              ? 'bg-purple-100 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800 shadow-inner' 
-              : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
-          }`}
-        >
-          <SettingsIcon className="w-5 h-5" />
-        </button>
       </div>
 
-      {/* LEFT TOOL BAR FLOAT */}
-      <aside className="fixed left-4 top-24 bottom-24 flex flex-col justify-center z-30 pointer-events-none">
+      {/* LEFT TOOL BAR FLOAT — collapsible */}
+      <aside className={`fixed left-0 top-24 bottom-24 flex items-center z-30 pointer-events-none transition-all duration-300 ${isToolbarOpen ? 'translate-x-4' : '-translate-x-full'}`}>
         <div className="pointer-events-auto">
           <Toolbar />
         </div>
       </aside>
+      {/* Left toolbar toggle tab */}
+      <button
+        onClick={() => setIsToolbarOpen(!isToolbarOpen)}
+        title={isToolbarOpen ? 'Hide Toolbar' : 'Show Toolbar'}
+        className={`fixed top-1/2 -translate-y-1/2 z-30 p-1.5 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border border-zinc-200/50 dark:border-zinc-800/50 shadow-lg text-zinc-400 hover:text-purple-600 dark:hover:text-purple-400 transition-all cursor-pointer ${isToolbarOpen ? 'left-[72px] rounded-r-lg border-l-0' : 'left-0 rounded-r-lg'}`}
+      >
+        {isToolbarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
+      </button>
 
       {/* RIGHT FLOATING INSPECTOR PANEL */}
       <aside className="fixed right-4 top-24 bottom-24 flex flex-col justify-center z-30 pointer-events-none">
