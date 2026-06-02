@@ -1,53 +1,218 @@
 import { useBoardStore } from '../store/boardStore';
-import { BookOpen, X } from 'lucide-react';
+import { X, Sigma, Zap, FlaskConical, Dna } from 'lucide-react';
 
-export default function FormulaPanel({ isOpen, onClose }) {
-  const { addObject, textColor, textFont, scale, position } = useBoardStore();
+const subjectMeta = {
+  math:     { label: 'Math Formula',     icon: Sigma,        color: 'text-purple-600 dark:text-purple-400' },
+  physics:  { label: 'Physics Formula',  icon: Zap,          color: 'text-blue-600 dark:text-blue-400' },
+  chemistry:{ label: 'Chemistry Formula',icon: FlaskConical, color: 'text-emerald-600 dark:text-emerald-400' },
+  biology:  { label: 'Biology Formula',  icon: Dna,          color: 'text-amber-600 dark:text-amber-400' },
+};
 
-  const formulaCategories = [
+const formulasBySubject = {
+  math: [
     {
-      title: 'Math Formula',
+      grade: 'Grade 7',
+      formulas: [
+        { name: 'Area of Rectangle', equation: 'A = l × w' },
+        { name: 'Perimeter of Rectangle', equation: 'P = 2(l + w)' },
+        { name: 'Volume of Cube', equation: 'V = s³' },
+        { name: 'Fraction Addition', equation: 'a/b + c/d = (ad + bc)/bd' },
+      ],
+    },
+    {
+      grade: 'Grade 8',
       formulas: [
         { name: 'Pythagorean Theorem', equation: 'a² + b² = c²' },
-        { name: 'Quadratic Formula', equation: 'x = (-b ± √(b² − 4ac)) / 2a' },
-        { name: 'Circle Area', equation: 'A = πr²' },
-        { name: 'Slope Formula', equation: 'm = (y₂ - y₁) / (x₂ - x₁)' },
-        { name: 'Derivative', equation: "f'(x) = lim[h→0] (f(x+h) - f(x))/h" },
+        { name: 'Slope Formula', equation: 'm = (y₂ − y₁)/(x₂ − x₁)' },
+        { name: 'Simple Interest', equation: 'I = PRT/100' },
       ],
     },
     {
-      title: 'Physics Formula',
+      grade: 'Grade 9',
+      formulas: [
+        { name: 'Quadratic Formula', equation: 'x = (−b ± √(b² − 4ac))/2a' },
+        { name: 'Area of Circle', equation: 'A = πr²' },
+        { name: 'Volume of Cylinder', equation: 'V = πr²h' },
+      ],
+    },
+    {
+      grade: 'Grade 10',
+      formulas: [
+        { name: 'Sine', equation: 'sin θ = opposite/hypotenuse' },
+        { name: 'Cosine', equation: 'cos θ = adjacent/hypotenuse' },
+        { name: 'Tangent', equation: 'tan θ = opposite/adjacent' },
+        { name: 'Arithmetic Mean', equation: 'x̄ = Σx/n' },
+      ],
+    },
+    {
+      grade: 'Grade 11',
+      formulas: [
+        { name: 'Power Rule', equation: "d/dx(xⁿ) = nxⁿ⁻¹" },
+        { name: 'Integration', equation: '∫ xⁿ dx = xⁿ⁺¹/(n+1) + C' },
+        { name: 'Logarithm Product', equation: 'logₐ(MN) = logₐM + logₐN' },
+      ],
+    },
+    {
+      grade: 'Grade 12',
+      formulas: [
+        { name: 'Limit Definition', equation: "f'(x) = lim[h→0](f(x+h)−f(x))/h" },
+        { name: 'Dot Product', equation: 'a·b = |a||b|cos θ' },
+        { name: 'Matrix Multiplication', equation: '(AB)ᵢⱼ = Σₖ AᵢₖBₖⱼ' },
+      ],
+    },
+  ],
+  physics: [
+    {
+      grade: 'Grade 7',
+      formulas: [
+        { name: 'Speed', equation: 'v = d/t' },
+        { name: 'Density', equation: 'ρ = m/V' },
+        { name: 'Force', equation: 'F = ma' },
+      ],
+    },
+    {
+      grade: 'Grade 8',
+      formulas: [
+        { name: 'Work', equation: 'W = Fd' },
+        { name: 'Power', equation: 'P = W/t' },
+        { name: 'Kinetic Energy', equation: 'KE = ½mv²' },
+        { name: 'Potential Energy', equation: 'PE = mgh' },
+      ],
+    },
+    {
+      grade: 'Grade 9',
+      formulas: [
+        { name: 'Wave Speed', equation: 'v = fλ' },
+        { name: "Ohm's Law", equation: 'V = IR' },
+        { name: 'Pressure', equation: 'P = F/A' },
+      ],
+    },
+    {
+      grade: 'Grade 10',
+      formulas: [
+        { name: 'Refractive Index', equation: 'n = sin i/sin r' },
+        { name: 'Lens Formula', equation: '1/f = 1/v + 1/u' },
+        { name: "Coulomb's Law", equation: 'F = kq₁q₂/r²' },
+      ],
+    },
+    {
+      grade: 'Grade 11',
       formulas: [
         { name: "Newton's Second Law", equation: 'F = ma' },
-        { name: "Einstein's Equation", equation: 'E = mc²' },
-        { name: "Ohm's Law", equation: 'V = IR' },
-        { name: 'Gravitational Force', equation: 'F = G(m₁m₂)/r²' },
-        { name: 'Kinetic Energy', equation: 'KE = ½mv²' },
+        { name: 'Gravitational Force', equation: 'F = Gm₁m₂/r²' },
+        { name: 'Centripetal Force', equation: 'F = mv²/r' },
       ],
     },
     {
-      title: 'Chemistry Formula',
+      grade: 'Grade 12',
+      formulas: [
+        { name: "Einstein's Equation", equation: 'E = mc²' },
+        { name: 'Photoelectric Effect', equation: 'E = hf' },
+        { name: 'Radioactive Decay', equation: 'N = N₀e^(−λt)' },
+      ],
+    },
+  ],
+  chemistry: [
+    {
+      grade: 'Grade 7',
+      formulas: [
+        { name: 'States of Matter', equation: 'Solid → Liquid → Gas' },
+        { name: 'Mass from Density', equation: 'm = ρV' },
+      ],
+    },
+    {
+      grade: 'Grade 8',
+      formulas: [
+        { name: 'Number of Moles', equation: 'n = m/M' },
+        { name: 'Empirical Formula', equation: 'Ratio of atoms = mol ratio' },
+      ],
+    },
+    {
+      grade: 'Grade 9',
+      formulas: [
+        { name: 'Concentration', equation: 'C = n/V' },
+        { name: 'Percentage Composition', equation: '% = (mass/total mass)×100' },
+      ],
+    },
+    {
+      grade: 'Grade 10',
+      formulas: [
+        { name: 'pH Formula', equation: 'pH = −log[H⁺]' },
+        { name: 'Neutralization', equation: 'H⁺ + OH⁻ → H₂O' },
+      ],
+    },
+    {
+      grade: 'Grade 11',
       formulas: [
         { name: 'Ideal Gas Law', equation: 'PV = nRT' },
-        { name: 'pH Formula', equation: 'pH = -log[H⁺]' },
-        { name: 'Molarity', equation: 'M = mol/L' },
-        { name: "Avogadro's Number", equation: 'Nₐ = 6.022 × 10²³' },
-        { name: 'Photosynthesis', equation: '6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂' },
+        { name: 'Enthalpy Change', equation: 'ΔH = H(products) − H(reactants)' },
       ],
     },
     {
-      title: 'Biology Formula',
+      grade: 'Grade 12',
       formulas: [
-        { name: 'Hardy-Weinberg', equation: 'p² + 2pq + q² = 1' },
-        { name: 'Cellular Respiration', equation: 'C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + ATP' },
-        { name: 'Surface Area/Volume', equation: 'SA:V = 6 / d' },
-        { name: 'Population Growth', equation: 'dN/dt = rN(1 - N/K)' },
+        { name: 'Rate Law', equation: 'Rate = k[A]ⁿ' },
+        { name: 'Equilibrium Constant', equation: 'K = [C]ᶜ[D]ᵈ/[A]ᵃ[B]ᵇ' },
+        { name: 'Cell Potential', equation: 'E°cell = E°cathode − E°anode' },
       ],
     },
-  ];
+  ],
+  biology: [
+    {
+      grade: 'Grade 7',
+      formulas: [
+        { name: 'Magnification', equation: 'M = Image size/Actual size' },
+        { name: 'Cell Division', equation: 'Mitosis: 2n → 2n (daughter cells)' },
+      ],
+    },
+    {
+      grade: 'Grade 8',
+      formulas: [
+        { name: 'BMI', equation: 'BMI = weight(kg)/height(m)²' },
+        { name: 'Heart Rate', equation: 'HR = beats/time(min)' },
+      ],
+    },
+    {
+      grade: 'Grade 9',
+      formulas: [
+        { name: 'Photosynthesis', equation: '6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂' },
+        { name: 'Cellular Respiration', equation: 'C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + ATP' },
+      ],
+    },
+    {
+      grade: 'Grade 10',
+      formulas: [
+        { name: 'Monohybrid Ratio', equation: 'Phenotype ratio = 3:1' },
+        { name: 'Dihybrid Ratio', equation: 'Phenotype ratio = 9:3:3:1' },
+        { name: 'Hardy-Weinberg', equation: 'p² + 2pq + q² = 1' },
+      ],
+    },
+    {
+      grade: 'Grade 11',
+      formulas: [
+        { name: 'Population Growth', equation: 'dN/dt = rN(1 − N/K)' },
+        { name: 'Carrying Capacity', equation: 'K = maximum population size' },
+      ],
+    },
+    {
+      grade: 'Grade 12',
+      formulas: [
+        { name: 'Chi-Square', equation: 'χ² = Σ(O − E)²/E' },
+        { name: 'DNA Base Pairing', equation: 'A=T, G≡C' },
+        { name: 'Transcription', equation: 'DNA → mRNA → Protein' },
+      ],
+    },
+  ],
+};
+
+export default function FormulaPanel({ subject, onClose }) {
+  const { addObject, textColor, textFont, scale, position } = useBoardStore();
+
+  const isOpen = !!subject;
+  const meta = subjectMeta[subject];
+  const grades = formulasBySubject[subject] || [];
 
   const insertFormula = (equation) => {
-    // Center coordinates inside active view bounds
     const canvasX = (window.innerWidth / 2 - position.x) / scale;
     const canvasY = (window.innerHeight / 2 - position.y) / scale;
 
@@ -77,9 +242,9 @@ export default function FormulaPanel({ isOpen, onClose }) {
     >
       {/* Header */}
       <div className="p-4 border-b border-zinc-200/50 dark:border-zinc-800/50 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 font-semibold">
-          <BookOpen className="w-5 h-5" />
-          <span>Formula Templates</span>
+        <div className={`flex items-center gap-2 font-semibold ${meta?.color || 'text-purple-600 dark:text-purple-400'}`}>
+          {meta?.icon && <meta.icon className="w-5 h-5" />}
+          <span>{meta?.label || 'Formula Templates'}</span>
         </div>
         <button
           onClick={onClose}
@@ -91,13 +256,13 @@ export default function FormulaPanel({ isOpen, onClose }) {
 
       {/* Body List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-5">
-        {formulaCategories.map((category) => (
-          <div key={category.title} className="space-y-2">
+        {grades.map((grade) => (
+          <div key={grade.grade} className="space-y-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
-              {category.title}
+              {grade.grade}
             </h3>
             <div className="space-y-2">
-              {category.formulas.map((f) => (
+              {grade.formulas.map((f) => (
                 <button
                   key={f.name}
                   onClick={() => insertFormula(f.equation)}

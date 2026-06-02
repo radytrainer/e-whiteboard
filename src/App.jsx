@@ -13,7 +13,10 @@ import { exportPNG } from './utils/exportPNG';
 import { exportPDF } from './utils/exportPDF';
 import {
   Download,
-  BookOpen,
+  Sigma,
+  Zap,
+  FlaskConical,
+  Dna,
   Settings as SettingsIcon,
   ChevronDown,
   PanelLeftClose,
@@ -30,7 +33,7 @@ export default function App() {
     setNotification(message);
   };
 
-  const [isFormulaOpen, setIsFormulaOpen] = useState(false);
+  const [formulaSubject, setFormulaSubject] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
   const [isNavOpen, setIsNavOpen] = useState(true);
@@ -162,25 +165,37 @@ export default function App() {
 
           <div className="my-1 h-[1px] w-8 bg-zinc-200 dark:bg-zinc-800" />
 
-          <button
-            onClick={() => {
-              setIsFormulaOpen(!isFormulaOpen);
-              setIsSettingsOpen(false);
-            }}
-            title="Formula Templates"
-            className={`cursor-pointer rounded-xl border p-2.5 transition-all focus:outline-none ${
-              isFormulaOpen
-                ? 'border-purple-200 bg-purple-100 text-purple-600 shadow-inner dark:border-purple-800 dark:bg-purple-950/40 dark:text-purple-400'
-                : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/50'
-            }`}
-          >
-            <BookOpen className="h-5 w-5" />
-          </button>
+          {[
+            { id: 'math',     icon: Sigma,        color: 'text-purple-600 dark:text-purple-400', title: 'Math Formula' },
+            { id: 'physics',  icon: Zap,          color: 'text-blue-600 dark:text-blue-400',     title: 'Physics Formula' },
+            { id: 'chemistry',icon: FlaskConical, color: 'text-emerald-600 dark:text-emerald-400',title: 'Chemistry Formula' },
+            { id: 'biology',  icon: Dna,          color: 'text-amber-600 dark:text-amber-400',   title: 'Biology Formula' },
+          ].map((s) => {
+            const Icon = s.icon;
+            const isActive = formulaSubject === s.id;
+            return (
+              <button
+                key={s.id}
+                onClick={() => {
+                  setFormulaSubject(isActive ? null : s.id);
+                  setIsSettingsOpen(false);
+                }}
+                title={s.title}
+                className={`cursor-pointer rounded-xl border p-2.5 transition-all focus:outline-none ${
+                  isActive
+                    ? 'border-zinc-300 bg-zinc-100 shadow-inner dark:border-zinc-700 dark:bg-zinc-800'
+                    : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/50'
+                }`}
+              >
+                <Icon className={`h-5 w-5 ${isActive ? s.color : ''}`} />
+              </button>
+            );
+          })}
 
           <button
             onClick={() => {
               setIsSettingsOpen(!isSettingsOpen);
-              setIsFormulaOpen(false);
+              setFormulaSubject(null);
             }}
             title="Appearance Settings"
             className={`cursor-pointer rounded-xl border p-2.5 transition-all focus:outline-none ${
@@ -214,7 +229,7 @@ export default function App() {
         {isToolbarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
       </button>
 
-      <FormulaPanel isOpen={isFormulaOpen} onClose={() => setIsFormulaOpen(false)} />
+      <FormulaPanel subject={formulaSubject} onClose={() => setFormulaSubject(null)} />
       <SettingsPanel isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
 
       <main className="relative z-10 h-full w-full flex-1">
