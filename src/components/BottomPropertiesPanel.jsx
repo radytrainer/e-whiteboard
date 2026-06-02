@@ -18,17 +18,9 @@ const STICKY_BG_COLORS = [
   { hex: '#d9f99d', label: 'Lime'    },
 ];
 
-// Emoji groups for the sticky note picker
-const EMOJI_GROUPS = [
-  {
-    label: 'Mood',
-    emojis: ['😊','😄','😍','😎','🤩','😅','🥺','😢','😔','😡','😤','🤔','😴','😂','💪','🎉'],
-  },
-  {
-    label: 'Marks',
-    emojis: ['❤️','⭐','🔥','💡','✅','❌','📌','🎯','👍','👎','⚡','💯','📚','✏️','🔖','💬'],
-  },
-];
+// Exactly 10 emojis per row
+const EMOJI_MOOD  = ['😊','😄','😍','😢','😡','😎','🤔','😅','🎉','💪'];
+const EMOJI_MARKS = ['❤️','⭐','🔥','💡','✅','❌','📌','🎯','👍','💯'];
 
 export default function BottomPropertiesPanel() {
   const {
@@ -326,18 +318,16 @@ export default function BottomPropertiesPanel() {
 
       {/* ── STICKY NOTE ── */}
       {showSticky && (
-        <div className="flex flex-col gap-2.5">
-          {/* Background color swatches */}
-          <div>
-            <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 block mb-1.5">Background</span>
-            <div className="flex gap-1.5 flex-wrap">
+        <div className="flex flex-col gap-2">
+
+          {/* Row 1: BG swatches · size slider — all inline */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* BG colour dots */}
+            <div className="flex gap-1 shrink-0">
               {STICKY_BG_COLORS.map(({ hex }) => (
-                <button
-                  key={hex}
-                  onClick={() => applySticky({ color: hex })}
-                  title={hex}
+                <button key={hex} onClick={() => applySticky({ color: hex })}
                   style={{ backgroundColor: hex }}
-                  className={`w-7 h-7 rounded-lg border-2 transition-all ${
+                  className={`w-6 h-6 rounded-lg border-2 transition-all ${
                     activeStickyBg.toLowerCase() === hex.toLowerCase()
                       ? 'border-zinc-800 dark:border-white scale-110 ring-2 ring-purple-500/40'
                       : 'border-zinc-300 dark:border-zinc-600 hover:scale-105'
@@ -345,62 +335,79 @@ export default function BottomPropertiesPanel() {
                 />
               ))}
             </div>
-          </div>
-
-          {/* Font size */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-semibold text-zinc-400 w-7 shrink-0">Size</span>
+            {vbar}
+            {/* Size */}
+            <span className="text-[10px] font-semibold text-zinc-400 shrink-0">Size</span>
             <input type="range" min="10" max="48" value={activeStickySize}
               onChange={(e) => applySticky({ fontSize: parseInt(e.target.value) })}
-              className="flex-1 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full appearance-none cursor-pointer accent-purple-600" />
-            <span className="text-[11px] font-mono text-zinc-500 w-8 text-right">{activeStickySize}px</span>
+              className="flex-1 min-w-[80px] h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full appearance-none cursor-pointer accent-purple-600" />
+            <span className="text-[11px] font-mono text-zinc-500 w-7 text-right shrink-0">{activeStickySize}px</span>
           </div>
 
-          {/* Text formatting */}
-          <FormatRow
-            getActive={(k) => ({ isBold: activeStickyBold, isItalic: activeStickyItalic, isUnderline: activeStickyUnderline }[k])}
-            getAlign={() => activeStickyAlign}
-            onToggle={(k) => {
-              const cur = { isBold: activeStickyBold, isItalic: activeStickyItalic, isUnderline: activeStickyUnderline };
-              applySticky({ [k]: !cur[k] });
-            }}
-            onAlign={(v) => applySticky({ align: v })}
-            onFont={(v) => applySticky({ fontFamily: v })}
-            activeFont={activeStickyFont}
-            disabled={!selectedId || selectedObj?.type !== 'sticky'}
-          />
-
-          {/* Text color */}
-          <div>
-            <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 block mb-1.5">Text Color</span>
-            <div className="flex gap-1.5 flex-wrap">
-              {colorPalette.map((c) =>
-                colorDot(c, activeStickyFontColor.toLowerCase() === c.toLowerCase(), () => applySticky({ fontColor: c }))
-              )}
-            </div>
+          {/* Row 2: B/I/U | Align | Fonts | text-colour dots — all inline */}
+          <div className="flex items-center gap-1 flex-wrap">
+            {[
+              { icon: Bold,      key: 'isBold',      active: activeStickyBold      },
+              { icon: Italic,    key: 'isItalic',    active: activeStickyItalic    },
+              { icon: Underline, key: 'isUnderline', active: activeStickyUnderline },
+            ].map(({ icon: Icon, key, active }) => (
+              <button key={key}
+                disabled={!selectedId || selectedObj?.type !== 'sticky'}
+                onClick={() => applySticky({ [key]: !active })}
+                className={`w-8 h-8 ${fmtBtn(active)}`}>
+                <Icon className="w-3.5 h-3.5" />
+              </button>
+            ))}
+            {vbar}
+            {[
+              { icon: AlignLeft,   val: 'left'   },
+              { icon: AlignCenter, val: 'center' },
+              { icon: AlignRight,  val: 'right'  },
+            ].map(({ icon: Icon, val }) => (
+              <button key={val}
+                disabled={!selectedId || selectedObj?.type !== 'sticky'}
+                onClick={() => applySticky({ align: val })}
+                className={`w-8 h-8 ${fmtBtn(activeStickyAlign === val)}`}>
+                <Icon className="w-3.5 h-3.5" />
+              </button>
+            ))}
+            {vbar}
+            {fontOptions.map((f) => (
+              <button key={f.value}
+                disabled={!selectedId || selectedObj?.type !== 'sticky'}
+                onClick={() => applySticky({ fontFamily: f.value })}
+                style={{ fontFamily: f.value }}
+                className={`px-2 h-8 text-[10px] font-semibold ${fmtBtn(activeStickyFont === f.value)}`}>
+                {f.label}
+              </button>
+            ))}
+            {vbar}
+            {colorPalette.map((c) =>
+              colorDot(c, activeStickyFontColor.toLowerCase() === c.toLowerCase(), () => applySticky({ fontColor: c }))
+            )}
           </div>
 
+          {/* Emoji section — separated by a thin divider, two compact horizontal rows */}
           {hbar}
-
-          {/* Emoji picker */}
-          {EMOJI_GROUPS.map((group) => (
-            <div key={group.label}>
-              <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block mb-1">
-                {group.label}
+          {[
+            { label: 'Mood',  emojis: EMOJI_MOOD  },
+            { label: 'Marks', emojis: EMOJI_MARKS },
+          ].map(({ label, emojis }) => (
+            <div key={label} className="flex items-center gap-0.5">
+              <span className="text-[9px] font-bold uppercase tracking-wide text-zinc-400 dark:text-zinc-500 w-8 shrink-0">
+                {label}
               </span>
-              <div className="flex gap-0.5 flex-wrap">
-                {group.emojis.map((emoji) => (
-                  <button
-                    key={emoji}
-                    onClick={() => insertEmoji(emoji)}
-                    disabled={!selectedId || selectedObj?.type !== 'sticky'}
-                    title={`Add ${emoji}`}
-                    className="w-9 h-9 flex items-center justify-center text-lg rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-30 active:scale-90"
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
+              {emojis.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => insertEmoji(emoji)}
+                  disabled={!selectedId || selectedObj?.type !== 'sticky'}
+                  title={`Add ${emoji}`}
+                  className="w-8 h-8 flex items-center justify-center text-base rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-30 active:scale-90"
+                >
+                  {emoji}
+                </button>
+              ))}
             </div>
           ))}
         </div>
