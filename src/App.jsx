@@ -112,22 +112,6 @@ export default function App() {
         </div>
       )}
 
-      {/* FLOATING TITLE & LOGO CARD (TOP LEFT) */}
-      <div className="fixed top-4 left-4 h-16 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl px-4 flex items-center gap-3 z-40 transition-all duration-300">
-        <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-purple-500/25">
-          <span className="font-extrabold text-xl font-sans">អ</span>
-        </div>
-        <div className="flex flex-col">
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => handleTitleChange(e.target.value)}
-            placeholder="Enter lesson title..."
-            className="bg-transparent font-bold text-sm md:text-md outline-none border-b border-transparent hover:border-zinc-300 dark:hover:border-zinc-700 focus:border-purple-500 transition-all font-sans px-1 text-zinc-800 dark:text-zinc-100"
-          />
-          <span className="text-[10px] text-zinc-400 dark:text-zinc-500 px-1 font-mono">Offline-first • auto-saving</span>
-        </div>
-      </div>
 
       {/* FLOATING ACTION NAVBAR (TOP RIGHT) */}
       <div className="fixed top-4 right-4 z-40 flex flex-col gap-2 bg-white/85 dark:bg-zinc-900/85 backdrop-blur-md rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl p-2 items-center">
