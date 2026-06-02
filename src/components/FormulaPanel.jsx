@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useBoardStore } from '../store/boardStore';
 import { X, Sigma, Zap, FlaskConical, Dna, Grid3x3, Plus } from 'lucide-react';
 
+// ─── Element data ────────────────────────────────────────────────────────────
 const ELEMENTS = [
   { sym:'H',  name:'Hydrogen',     num:1,  row:1, col:1  },
   { sym:'He', name:'Helium',       num:2,  row:1, col:18 },
@@ -65,14 +66,14 @@ const ELEMENTS = [
   { sym:'Nd', name:'Neodymium',    num:60, row:6, col:6, isLan:true },
   { sym:'Sm', name:'Samarium',     num:62, row:6, col:8, isLan:true },
   { sym:'Eu', name:'Europium',     num:63, row:6, col:9, isLan:true },
-  { sym:'Gd', name:'Gadolinium',   num:64, row:6, col:10, isLan:true },
-  { sym:'Tb', name:'Terbium',      num:65, row:6, col:11, isLan:true },
-  { sym:'Dy', name:'Dysprosium',   num:66, row:6, col:12, isLan:true },
-  { sym:'Ho', name:'Holmium',      num:67, row:6, col:13, isLan:true },
-  { sym:'Er', name:'Erbium',       num:68, row:6, col:14, isLan:true },
-  { sym:'Tm', name:'Thulium',      num:69, row:6, col:15, isLan:true },
-  { sym:'Yb', name:'Ytterbium',    num:70, row:6, col:16, isLan:true },
-  { sym:'Lu', name:'Lutetium',     num:71, row:6, col:17, isLan:true },
+  { sym:'Gd', name:'Gadolinium',   num:64, row:6, col:10,isLan:true },
+  { sym:'Tb', name:'Terbium',      num:65, row:6, col:11,isLan:true },
+  { sym:'Dy', name:'Dysprosium',   num:66, row:6, col:12,isLan:true },
+  { sym:'Ho', name:'Holmium',      num:67, row:6, col:13,isLan:true },
+  { sym:'Er', name:'Erbium',       num:68, row:6, col:14,isLan:true },
+  { sym:'Tm', name:'Thulium',      num:69, row:6, col:15,isLan:true },
+  { sym:'Yb', name:'Ytterbium',    num:70, row:6, col:16,isLan:true },
+  { sym:'Lu', name:'Lutetium',     num:71, row:6, col:17,isLan:true },
   { sym:'Hf', name:'Hafnium',      num:72, row:6, col:4  },
   { sym:'Ta', name:'Tantalum',     num:73, row:6, col:5  },
   { sym:'W',  name:'Tungsten',     num:74, row:6, col:6  },
@@ -97,14 +98,14 @@ const ELEMENTS = [
   { sym:'Np', name:'Neptunium',    num:93, row:7, col:7, isAct:true },
   { sym:'Pu', name:'Plutonium',    num:94, row:7, col:8, isAct:true },
   { sym:'Am', name:'Americium',    num:95, row:7, col:9, isAct:true },
-  { sym:'Cm', name:'Curium',       num:96, row:7, col:10, isAct:true },
-  { sym:'Bk', name:'Berkelium',    num:97, row:7, col:11, isAct:true },
-  { sym:'Cf', name:'Californium',  num:98, row:7, col:12, isAct:true },
-  { sym:'Es', name:'Einsteinium',  num:99, row:7, col:13, isAct:true },
-  { sym:'Fm', name:'Fermium',      num:100,row:7, col:14, isAct:true },
-  { sym:'Md', name:'Mendelevium',  num:101,row:7, col:15, isAct:true },
-  { sym:'No', name:'Nobelium',     num:102,row:7, col:16, isAct:true },
-  { sym:'Lr', name:'Lawrencium',   num:103,row:7, col:17, isAct:true },
+  { sym:'Cm', name:'Curium',       num:96, row:7, col:10,isAct:true },
+  { sym:'Bk', name:'Berkelium',    num:97, row:7, col:11,isAct:true },
+  { sym:'Cf', name:'Californium',  num:98, row:7, col:12,isAct:true },
+  { sym:'Es', name:'Einsteinium',  num:99, row:7, col:13,isAct:true },
+  { sym:'Fm', name:'Fermium',      num:100,row:7, col:14,isAct:true },
+  { sym:'Md', name:'Mendelevium',  num:101,row:7, col:15,isAct:true },
+  { sym:'No', name:'Nobelium',     num:102,row:7, col:16,isAct:true },
+  { sym:'Lr', name:'Lawrencium',   num:103,row:7, col:17,isAct:true },
   { sym:'Rf', name:'Rutherfordium',num:104,row:7, col:4  },
   { sym:'Db', name:'Dubnium',      num:105,row:7, col:5  },
   { sym:'Sg', name:'Seaborgium',   num:106,row:7, col:6  },
@@ -122,120 +123,112 @@ const ELEMENTS = [
   { sym:'Og', name:'Oganesson',    num:118,row:7, col:18 },
 ];
 
-function PeriodicTableModal({ onClose, onInsert }) {
+// ─── Periodic table rendered inline inside the panel ─────────────────────────
+function PeriodicTableInline({ onInsert }) {
+  const CELL = 28; // px per cell
+  const GAP  = 2;  // px gap
+
   const gridStyle = {
     display: 'grid',
-    gridTemplateColumns: 'repeat(18, minmax(0, 1fr))',
-    gap: '2px',
+    gridTemplateColumns: `repeat(18, ${CELL}px)`,
+    gap: `${GAP}px`,
   };
 
   const cellColor = (el) => {
     if (!el) return '';
-    if (el.isLan) return 'bg-emerald-100 dark:bg-emerald-900/60 hover:bg-emerald-200 dark:hover:bg-emerald-800 text-emerald-800 dark:text-emerald-200';
-    if (el.isAct) return 'bg-sky-100 dark:bg-sky-900/60 hover:bg-sky-200 dark:hover:bg-sky-800 text-sky-800 dark:text-sky-200';
     const n = el.num;
-    if (n === 1 || [3,4,11,12,19,20,37,38,55,56,87,88].includes(n)) return 'bg-amber-100 dark:bg-amber-900/60 hover:bg-amber-200 dark:hover:bg-amber-800 text-amber-800 dark:text-amber-200';
-    if ([9,10,17,18,35,36,53,54,85,86,118].includes(n)) return 'bg-cyan-100 dark:bg-cyan-900/60 hover:bg-cyan-200 dark:hover:bg-cyan-800 text-cyan-800 dark:text-cyan-200';
-    if ((n>=21&&n<=30)||(n>=39&&n<=48)||(n>=72&&n<=80)||(n>=104&&n<=112)) return 'bg-rose-100 dark:bg-rose-900/60 hover:bg-rose-200 dark:hover:bg-rose-800 text-rose-800 dark:text-rose-200';
+    if (el.isLan) return 'bg-emerald-100 dark:bg-emerald-900/60 hover:bg-emerald-200 dark:hover:bg-emerald-800 text-emerald-800 dark:text-emerald-200';
+    if (el.isAct) return 'bg-sky-100    dark:bg-sky-900/60    hover:bg-sky-200    dark:hover:bg-sky-800    text-sky-800    dark:text-sky-200';
+    if (n === 1 || [3,4,11,12,19,20,37,38,55,56,87,88].includes(n))
+      return 'bg-amber-100 dark:bg-amber-900/60 hover:bg-amber-200 dark:hover:bg-amber-800 text-amber-800 dark:text-amber-200';
+    if ([9,10,17,18,35,36,53,54,85,86,118].includes(n))
+      return 'bg-cyan-100 dark:bg-cyan-900/60 hover:bg-cyan-200 dark:hover:bg-cyan-800 text-cyan-800 dark:text-cyan-200';
+    if ((n>=21&&n<=30)||(n>=39&&n<=48)||(n>=72&&n<=80)||(n>=104&&n<=112))
+      return 'bg-rose-100 dark:bg-rose-900/60 hover:bg-rose-200 dark:hover:bg-rose-800 text-rose-800 dark:text-rose-200';
     return 'bg-zinc-100 dark:bg-zinc-800 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-zinc-800 dark:text-zinc-200';
   };
 
-  const buildRow = (r) => {
-    const cells = [];
-    for (let c = 1; c <= 18; c++) {
+  const ElBtn = ({ el }) => (
+    <button
+      onClick={() => onInsert(el.sym)}
+      title={`${el.name} (${el.num})`}
+      style={{ width: CELL, height: CELL }}
+      className={`rounded text-[8px] font-bold flex flex-col items-center justify-center leading-none cursor-pointer transition-colors active:scale-95 ${cellColor(el)}`}
+    >
+      <span className="text-[6px] font-normal opacity-50">{el.num}</span>
+      <span>{el.sym}</span>
+    </button>
+  );
+
+  const buildRow = (r) =>
+    Array.from({ length: 18 }, (_, ci) => {
+      const c = ci + 1;
       const el = ELEMENTS.find(e => e.row === r && e.col === c && !e.isLan && !e.isAct);
-      if (el) {
-        cells.push(
-          <button key={`${r}-${c}`}
-            onClick={() => onInsert(el.sym)}
-            title={`${el.name} (${el.num})`}
-            className={`w-full aspect-square rounded text-[9px] font-bold flex flex-col items-center justify-center leading-tight cursor-pointer transition-colors ${cellColor(el)}`}
-          >
-            <span className="text-[6px] font-normal opacity-60 leading-none">{el.num}</span>
-            <span className="leading-none">{el.sym}</span>
-          </button>
-        );
-      } else {
-        cells.push(<div key={`${r}-${c}`} />);
-      }
-    }
-    return cells;
+      return el
+        ? <ElBtn key={`${r}-${c}`} el={el} />
+        : <div key={`${r}-${c}`} style={{ width: CELL, height: CELL }} />;
+    });
+
+  const seriesRow = (filterFn) => {
+    const series = ELEMENTS.filter(filterFn);
+    return [
+      // 3 empty cells (group 1-3 columns)
+      ...Array.from({ length: 3 }, (_, i) => <div key={`pad-${i}`} style={{ width: CELL, height: CELL }} />),
+      ...series.map(el => <ElBtn key={el.sym} el={el} />),
+      // pad to 18
+      ...Array.from({ length: 18 - 3 - series.length }, (_, i) => <div key={`post-${i}`} style={{ width: CELL, height: CELL }} />),
+    ];
   };
 
-  const seriesRow = (filter) =>
-    ELEMENTS.filter(filter).map(el => (
-      <button key={el.sym}
-        onClick={() => onInsert(el.sym)}
-        title={`${el.name} (${el.num})`}
-        className={`w-full aspect-square rounded text-[9px] font-bold flex flex-col items-center justify-center leading-tight cursor-pointer transition-colors ${cellColor(el)}`}
-      >
-        <span className="text-[6px] font-normal opacity-60 leading-none">{el.num}</span>
-        <span className="leading-none">{el.sym}</span>
-      </button>
-    ));
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
-      <div
-        className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 p-4 max-w-[95vw] max-h-[95vh] overflow-auto"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Grid3x3 className="w-4 h-4 text-emerald-500" />
-            <h2 className="text-sm font-bold text-zinc-700 dark:text-zinc-200">Periodic Table</h2>
-          </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+    <div>
+      {/* Color legend */}
+      <div className="flex flex-wrap gap-1 mb-3">
+        {[
+          { label: 'Alkali / Alkaline', cls: 'bg-amber-100  dark:bg-amber-900/60  text-amber-700  dark:text-amber-300'  },
+          { label: 'Transition metals', cls: 'bg-rose-100   dark:bg-rose-900/60   text-rose-700   dark:text-rose-300'   },
+          { label: 'Noble gases',       cls: 'bg-cyan-100   dark:bg-cyan-900/60   text-cyan-700   dark:text-cyan-300'   },
+          { label: 'Lanthanides',       cls: 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300'},
+          { label: 'Actinides',         cls: 'bg-sky-100    dark:bg-sky-900/60    text-sky-700    dark:text-sky-300'    },
+          { label: 'Other',             cls: 'bg-zinc-100   dark:bg-zinc-800      text-zinc-600   dark:text-zinc-400'   },
+        ].map(l => (
+          <span key={l.label} className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${l.cls}`}>
+            {l.label}
+          </span>
+        ))}
+      </div>
 
-        {/* Legend */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {[
-            { label: 'Alkali/Alkaline', cls: 'bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300' },
-            { label: 'Transition', cls: 'bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300' },
-            { label: 'Noble Gas', cls: 'bg-cyan-100 dark:bg-cyan-900/60 text-cyan-700 dark:text-cyan-300' },
-            { label: 'Lanthanide', cls: 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300' },
-            { label: 'Actinide', cls: 'bg-sky-100 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300' },
-            { label: 'Other', cls: 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400' },
-          ].map(l => (
-            <span key={l.label} className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${l.cls}`}>{l.label}</span>
-          ))}
-        </div>
-
-        <div className="space-y-0.5 min-w-[560px]">
+      {/* Table — scrolls horizontally if panel is narrow */}
+      <div className="overflow-x-auto pb-1">
+        <div className="space-y-[2px]" style={{ width: 18 * CELL + 17 * GAP }}>
           {[1,2,3,4,5,6,7].map(r => (
             <div key={r} style={gridStyle}>{buildRow(r)}</div>
           ))}
-          <div className="h-2" />
+          <div style={{ height: 6 }} />
           {/* Lanthanides */}
-          <div style={gridStyle}>
-            <div className="col-span-3" />
-            {seriesRow(e => e.isLan)}
-            {Array.from({ length: 18 - 3 - ELEMENTS.filter(e => e.isLan).length }, (_, i) => <div key={i} />)}
-          </div>
+          <div style={gridStyle}>{seriesRow(e => e.isLan)}</div>
           {/* Actinides */}
-          <div style={gridStyle}>
-            <div className="col-span-3" />
-            {seriesRow(e => e.isAct)}
-            {Array.from({ length: 18 - 3 - ELEMENTS.filter(e => e.isAct).length }, (_, i) => <div key={i} />)}
-          </div>
+          <div style={gridStyle}>{seriesRow(e => e.isAct)}</div>
         </div>
       </div>
+
+      <p className="mt-2 text-[10px] text-zinc-400 dark:text-zinc-500">
+        Tap any element to insert its symbol on the canvas.
+      </p>
     </div>
   );
 }
 
-// Subject theme tokens
+// ─── Subject theme tokens ─────────────────────────────────────────────────────
 const SUBJECT_THEME = {
-  math:      { label: 'Math',      icon: Sigma,        accent: 'purple',  header: 'bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800',  badge: 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300',  card: 'hover:bg-purple-50 dark:hover:bg-purple-950/20 group-hover:text-purple-600 dark:group-hover:text-purple-400', eq: 'text-purple-800 dark:text-purple-200' },
-  physics:   { label: 'Physics',   icon: Zap,          accent: 'blue',    header: 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800',           badge: 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300',           card: 'hover:bg-blue-50 dark:hover:bg-blue-950/20 group-hover:text-blue-600 dark:group-hover:text-blue-400',       eq: 'text-blue-800 dark:text-blue-200' },
-  chemistry: { label: 'Chemistry', icon: FlaskConical, accent: 'emerald', header: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800',badge: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300',card: 'hover:bg-emerald-50 dark:hover:bg-emerald-950/20 group-hover:text-emerald-600 dark:group-hover:text-emerald-400', eq: 'text-emerald-800 dark:text-emerald-200' },
-  biology:   { label: 'Biology',   icon: Dna,          accent: 'amber',   header: 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800',       badge: 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300',       card: 'hover:bg-amber-50 dark:hover:bg-amber-950/20 group-hover:text-amber-600 dark:group-hover:text-amber-400',   eq: 'text-amber-800 dark:text-amber-200' },
-  periodic:  { label: 'Elements',  icon: Grid3x3,      accent: 'emerald', header: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800',badge: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300',card: '', eq: '' },
+  math:      { label: 'Math',      badgeTxt: 'Formulas',    icon: Sigma,        header: 'bg-purple-50  dark:bg-purple-950/30  border-purple-200  dark:border-purple-800',  badge: 'bg-purple-100  dark:bg-purple-900/40  text-purple-600  dark:text-purple-300',  card: 'hover:bg-purple-50  dark:hover:bg-purple-950/20 group-hover:text-purple-600  dark:group-hover:text-purple-400' },
+  physics:   { label: 'Physics',   badgeTxt: 'Formulas',    icon: Zap,          header: 'bg-blue-50    dark:bg-blue-950/30    border-blue-200    dark:border-blue-800',    badge: 'bg-blue-100    dark:bg-blue-900/40    text-blue-600    dark:text-blue-300',    card: 'hover:bg-blue-50    dark:hover:bg-blue-950/20   group-hover:text-blue-600    dark:group-hover:text-blue-400'   },
+  chemistry: { label: 'Chemistry', badgeTxt: 'Formulas',    icon: FlaskConical, header: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800', badge: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300', card: 'hover:bg-emerald-50 dark:hover:bg-emerald-950/20 group-hover:text-emerald-600 dark:group-hover:text-emerald-400'},
+  biology:   { label: 'Biology',   badgeTxt: 'Formulas',    icon: Dna,          header: 'bg-amber-50   dark:bg-amber-950/30   border-amber-200   dark:border-amber-800',   badge: 'bg-amber-100   dark:bg-amber-900/40   text-amber-600   dark:text-amber-300',   card: 'hover:bg-amber-50   dark:hover:bg-amber-950/20  group-hover:text-amber-600   dark:group-hover:text-amber-400'  },
+  periodic:  { label: 'Elements',  badgeTxt: '118 Elements', icon: Grid3x3,     header: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800', badge: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300', card: '' },
 };
 
+// ─── Formula data ─────────────────────────────────────────────────────────────
 const formulasBySubject = {
   math: [
     { grade: 'Grade 7', formulas: [
@@ -361,21 +354,20 @@ const formulasBySubject = {
   ],
 };
 
+// ─── Main panel component ─────────────────────────────────────────────────────
 export default function FormulaPanel({ subject, onClose }) {
-  const [showPeriodic, setShowPeriodic] = useState(false);
   const { addObject, textColor, textFont, scale, position } = useBoardStore();
 
-  const isOpen = !!subject;
-  const theme = SUBJECT_THEME[subject] || SUBJECT_THEME.math;
+  const isOpen   = !!subject;
+  const isPeriodic = subject === 'periodic';
+  const theme    = SUBJECT_THEME[subject] || SUBJECT_THEME.math;
   const SubjectIcon = theme.icon;
-  const grades = formulasBySubject[subject] || [];
+  const grades   = formulasBySubject[subject] || [];
 
-  useEffect(() => {
-    if (subject === 'periodic') setShowPeriodic(true);
-  }, [subject]);
+  // Unused effect removed — periodic table now renders inline, no modal needed
 
   const insertAtCenter = (text) => {
-    const canvasX = (window.innerWidth / 2 - position.x) / scale;
+    const canvasX = (window.innerWidth  / 2 - position.x) / scale;
     const canvasY = (window.innerHeight / 2 - position.y) / scale;
     addObject({
       type: 'text', text,
@@ -387,55 +379,51 @@ export default function FormulaPanel({ subject, onClose }) {
   };
 
   return (
-    <>
-      {/* Panel — mobile: near top full width; desktop: right sidebar */}
-      <div className={`
-        fixed z-40 flex flex-col
-        bg-white/97 dark:bg-zinc-900/97 backdrop-blur-md
-        border border-zinc-200/60 dark:border-zinc-800/60
-        shadow-2xl
-        transition-all duration-300
-        top-16 left-4 right-4 max-h-[calc(100dvh-9rem)] rounded-2xl
-        sm:top-4 sm:right-20 sm:bottom-4 sm:left-auto sm:w-72 sm:max-h-none sm:rounded-2xl
-        ${isOpen ? 'opacity-100 translate-y-0 sm:translate-x-0' : 'opacity-0 pointer-events-none translate-y-4 sm:translate-y-0 sm:translate-x-8'}
-      `}>
+    <div className={[
+      // Base — same position / behaviour as other panels
+      'fixed z-40 flex flex-col',
+      'bg-white/97 dark:bg-zinc-900/97 backdrop-blur-md',
+      'border border-zinc-200/60 dark:border-zinc-800/60 shadow-2xl',
+      'transition-all duration-300',
+      // Mobile: full-width near top
+      'top-16 left-4 right-4 max-h-[calc(100dvh-9rem)] rounded-2xl',
+      // Desktop: right sidebar — widen automatically for the periodic table
+      isPeriodic
+        ? 'sm:top-4 sm:right-20 sm:bottom-4 sm:left-auto sm:w-[640px] sm:max-h-none sm:rounded-2xl'
+        : 'sm:top-4 sm:right-20 sm:bottom-4 sm:left-auto sm:w-72    sm:max-h-none sm:rounded-2xl',
+      // Open / close animation
+      isOpen
+        ? 'opacity-100 translate-y-0 sm:translate-x-0'
+        : 'opacity-0 pointer-events-none translate-y-4 sm:translate-y-0 sm:translate-x-8',
+    ].join(' ')}>
 
-        {/* Header */}
-        <div className={`flex items-center justify-between px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 ${theme.header} rounded-t-2xl shrink-0`}>
-          <div className="flex items-center gap-2">
-            <SubjectIcon className="w-4 h-4" />
-            <span className="text-sm font-bold text-zinc-800 dark:text-zinc-100">{theme.label}</span>
-            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${theme.badge}`}>
-              Formulas
-            </span>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-white/60 dark:hover:bg-zinc-800 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
+      {/* ── Header ── */}
+      <div className={`flex items-center justify-between px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 ${theme.header} rounded-t-2xl shrink-0`}>
+        <div className="flex items-center gap-2">
+          <SubjectIcon className="w-4 h-4" />
+          <span className="text-sm font-bold text-zinc-800 dark:text-zinc-100">{theme.label}</span>
+          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${theme.badge}`}>
+            {theme.badgeTxt}
+          </span>
         </div>
+        <button
+          onClick={onClose}
+          className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-white/60 dark:hover:bg-zinc-800 transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto overscroll-contain p-3 space-y-4">
-          {subject === 'periodic' ? (
-            <button
-              onClick={() => setShowPeriodic(true)}
-              className="w-full group p-4 rounded-xl border-2 border-dashed border-emerald-300 dark:border-emerald-700 hover:border-emerald-400 dark:hover:border-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all text-left"
-            >
-              <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
-                <Grid3x3 className="w-4 h-4" />
-                Open Periodic Table
-              </div>
-              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Browse all 118 elements. Tap any to insert on canvas.
-              </p>
-            </button>
-          ) : (
-            grades.map((section) => (
+      {/* ── Body ── */}
+      <div className="flex-1 overflow-auto overscroll-contain p-3">
+        {isPeriodic ? (
+          // Periodic table rendered directly — no modal
+          <PeriodicTableInline onInsert={insertAtCenter} />
+        ) : (
+          <div className="space-y-4">
+            {grades.map((section) => (
               <div key={section.grade}>
-                {/* Grade badge */}
+                {/* Grade badge + rule */}
                 <div className="flex items-center gap-2 mb-2">
                   <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${theme.badge}`}>
                     {section.grade}
@@ -454,17 +442,7 @@ export default function FormulaPanel({ subject, onClose }) {
                         e.dataTransfer.setData('text/plain', f.equation);
                         e.dataTransfer.effectAllowed = 'copy';
                       }}
-                      className={`
-                        group w-full text-left
-                        bg-white dark:bg-zinc-900/60
-                        border border-zinc-100 dark:border-zinc-800
-                        rounded-xl px-3 py-2.5
-                        transition-all duration-150
-                        cursor-grab active:cursor-grabbing
-                        ${theme.card}
-                        hover:border-transparent hover:shadow-md
-                        active:scale-[0.98]
-                      `}
+                      className={`group w-full text-left bg-white dark:bg-zinc-900/60 border border-zinc-100 dark:border-zinc-800 rounded-xl px-3 py-2.5 transition-all duration-150 cursor-grab active:cursor-grabbing ${theme.card} hover:border-transparent hover:shadow-md active:scale-[0.98]`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
@@ -481,17 +459,10 @@ export default function FormulaPanel({ subject, onClose }) {
                   ))}
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
-
-      {showPeriodic && (
-        <PeriodicTableModal
-          onClose={() => setShowPeriodic(false)}
-          onInsert={(sym) => { insertAtCenter(sym); setShowPeriodic(false); }}
-        />
-      )}
-    </>
+    </div>
   );
 }
