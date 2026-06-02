@@ -387,10 +387,10 @@ export default function FormulaPanel({ subject, onClose }) {
       'transition-all duration-300',
       // Mobile: full-width near top
       'top-16 left-4 right-4 max-h-[calc(100dvh-9rem)] rounded-2xl',
-      // Desktop: right sidebar — widen automatically for the periodic table
+      // Desktop: right sidebar — widen for periodic table; height auto-fits content up to max
       isPeriodic
-        ? 'sm:top-4 sm:right-20 sm:bottom-4 sm:left-auto sm:w-[640px] sm:max-h-none sm:rounded-2xl'
-        : 'sm:top-4 sm:right-20 sm:bottom-4 sm:left-auto sm:w-72    sm:max-h-none sm:rounded-2xl',
+        ? 'sm:top-4 sm:right-20 sm:left-auto sm:w-[640px] sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl'
+        : 'sm:top-4 sm:right-20 sm:left-auto sm:w-72    sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl',
       // Open / close animation
       isOpen
         ? 'opacity-100 translate-y-0 sm:translate-x-0'

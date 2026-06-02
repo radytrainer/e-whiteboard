@@ -318,7 +318,11 @@ export default function Canvas({ stageRef }) {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.code === 'Space') {
-        // Prevent default browser scroll
+        // Don't intercept space when the user is typing inside a text field
+        const t = e.target;
+        const isTyping = t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable;
+        if (isTyping) return;
+        // Prevent default browser scroll only when on the canvas
         e.preventDefault();
         setIsSpacePressed(true);
       }
