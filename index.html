@@ -2,9 +2,79 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- Primary SEO -->
+    <title>Whiteboard - Free Online Drawing & Brainstorming Tool</title>
+    <meta name="description" content="Free online whiteboard for drawing, sketching, and brainstorming. Includes canvas tools, shapes, math formulas, sticky notes, PDF/PNG export, and real-time collaboration. No sign-up required." />
+    <meta name="keywords" content="whiteboard, online whiteboard, free whiteboard, digital whiteboard, drawing tool, brainstorming tool, collaborative whiteboard, online drawing, sketch tool, mind map, math formulas, canvas" />
+    <meta name="author" content="Whiteboard App" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://whiteboard.app/" />
+
+    <!-- Open Graph (Facebook, LinkedIn, WhatsApp) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Whiteboard" />
+    <meta property="og:title" content="Whiteboard - Free Online Drawing & Brainstorming Tool" />
+    <meta property="og:description" content="Free online whiteboard for drawing, sketching, and brainstorming. Real-time collaboration, math formulas, shapes, and PDF export — no sign-up needed." />
+    <meta property="og:url" content="https://whiteboard.app/" />
+    <meta property="og:image" content="/pwa-512x512.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Whiteboard - Free Online Drawing & Brainstorming Tool" />
+    <meta name="twitter:description" content="Free online whiteboard for drawing, sketching, and brainstorming. Real-time collaboration, math formulas, and PDF export." />
+    <meta name="twitter:image" content="/pwa-512x512.png" />
+
+    <!-- PWA / Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#863bff" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- iOS / Apple PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Whiteboard" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <!-- Microsoft / Windows tiles -->
+    <meta name="msapplication-TileColor" content="#863bff" />
+    <meta name="msapplication-TileImage" content="/pwa-192x192.png" />
+
+    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>whiteboard</title>
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Whiteboard",
+      "description": "Free online whiteboard for drawing, sketching, and brainstorming. Real-time collaboration, math formulas, shapes, and PDF export.",
+      "url": "https://whiteboard.app/",
+      "applicationCategory": "ProductivityApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Freehand drawing",
+        "Shapes and arrows",
+        "Text and sticky notes",
+        "Math formula support",
+        "PDF and PNG export",
+        "Real-time collaboration",
+        "No sign-up required"
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
