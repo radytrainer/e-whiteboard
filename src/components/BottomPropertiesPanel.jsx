@@ -1,29 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   Square, Circle, Triangle, Minus, Hexagon, ArrowRight,
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
-  ChevronDown, ChevronRight, Pen, Type, Shapes
+  Pen, Type, Shapes,
 } from 'lucide-react';
 import { useBoardStore } from '../store/boardStore';
-
-function CollapsibleSection({ title, icon: Icon, defaultExpanded = true, children }) {
-  const [expanded, setExpanded] = useState(defaultExpanded);
-
-  return (
-    <div>
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 w-full text-left py-1.5 text-[10px] font-bold uppercase tracking-wider text-purple-500 dark:text-purple-400 font-mono"
-      >
-        {Icon && <Icon className="w-3.5 h-3.5" />}
-        <span>{title}</span>
-        {expanded ? <ChevronDown className="w-3 h-3 ml-auto" /> : <ChevronRight className="w-3 h-3 ml-auto" />}
-      </button>
-      <hr className="border-zinc-200 dark:border-zinc-700 mb-2" />
-      {expanded && <div className="pb-1">{children}</div>}
-    </div>
-  );
-}
 
 export default function BottomPropertiesPanel() {
   const {
@@ -47,15 +28,15 @@ export default function BottomPropertiesPanel() {
   ];
 
   const fontOptions = [
-    { label: 'Inter',    value: 'Inter'           },
-    { label: 'ខ្មែរ',   value: 'Kantumruy Pro'    },
-    { label: 'Serif',    value: 'Georgia'          },
-    { label: 'Mono',     value: 'monospace'        },
+    { label: 'Inter',  value: 'Inter'         },
+    { label: 'ខ្មែរ', value: 'Kantumruy Pro'  },
+    { label: 'Serif',  value: 'Georgia'        },
+    { label: 'Mono',   value: 'monospace'      },
   ];
 
-  const activeTextColor   = (selectedObj?.type === 'text' ? selectedObj.fontColor    : undefined) ?? textColor;
-  const activeTextSize    = (selectedObj?.type === 'text' ? selectedObj.fontSize     : undefined) ?? textSize;
-  const activeFontFamily  = (selectedObj?.type === 'text' ? selectedObj.fontFamily   : undefined) ?? textFont;
+  const activeTextColor   = (selectedObj?.type === 'text' ? selectedObj.fontColor  : undefined) ?? textColor;
+  const activeTextSize    = (selectedObj?.type === 'text' ? selectedObj.fontSize   : undefined) ?? textSize;
+  const activeFontFamily  = (selectedObj?.type === 'text' ? selectedObj.fontFamily : undefined) ?? textFont;
   const activeIsBold      = selectedObj?.type === 'text' ? !!selectedObj.isBold      : false;
   const activeIsItalic    = selectedObj?.type === 'text' ? !!selectedObj.isItalic    : false;
   const activeIsUnderline = selectedObj?.type === 'text' ? !!selectedObj.isUnderline : false;
@@ -70,9 +51,7 @@ export default function BottomPropertiesPanel() {
     if (updates.fontColor  !== undefined) setTextColor(updates.fontColor);
     if (updates.fontSize   !== undefined) setTextSize(updates.fontSize);
     if (updates.fontFamily !== undefined) setTextFont(updates.fontFamily);
-    if (selectedId && selectedObj?.type === 'text') {
-      updateObject(selectedId, updates);
-    }
+    if (selectedId && selectedObj?.type === 'text') updateObject(selectedId, updates);
   };
 
   const applyShape = (strokeColor, fillValue) => {
@@ -93,207 +72,213 @@ export default function BottomPropertiesPanel() {
   };
 
   const currentFillChoice =
-    activeShapeFill === 'transparent'                                       ? 'none'
-    : (activeShapeFill.length > 7 && activeShapeFill.endsWith('26'))       ? 'light'
+    activeShapeFill === 'transparent'                                ? 'none'
+    : (activeShapeFill.length > 7 && activeShapeFill.endsWith('26')) ? 'light'
     : 'solid';
 
-  const labelCls = 'text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 block mb-1';
+  const toolLabels = { pencil: 'Pencil', text: 'Text', shape: 'Shape' };
+  const toolIcons  = { pencil: Pen, text: Type, shape: Shapes };
+  const ToolIcon   = toolIcons[tool];
+
+  const colorBtn = (color, isActive, onClick) => (
+    <button
+      key={color}
+      onClick={onClick}
+      style={{ backgroundColor: color }}
+      className={`w-7 h-7 rounded-full border-2 transition-all duration-150 ${
+        isActive
+          ? 'border-zinc-800 dark:border-white scale-110 ring-2 ring-purple-500/40'
+          : 'border-zinc-200 dark:border-zinc-600 hover:scale-105'
+      }`}
+    />
+  );
+
+  const divider = <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-0.5" />;
 
   return (
-    <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md rounded-2xl shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50 px-4 py-2 flex items-start gap-6 max-w-[90vw] min-w-[300px] animate-in slide-in-from-bottom-4 duration-200 pointer-events-auto overflow-x-auto">
-      {/* ── PENCIL PROPERTIES ── */}
+    <div className="
+      bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md
+      rounded-2xl shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50
+      p-3 flex flex-col gap-2.5
+      w-[min(95vw,560px)]
+      animate-in slide-in-from-bottom-4 duration-200 pointer-events-auto
+    ">
+      {/* Header */}
+      <div className="flex items-center gap-1.5">
+        <ToolIcon className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
+        <span className="text-[10px] font-bold uppercase tracking-widest text-purple-500 dark:text-purple-400 font-mono">
+          {toolLabels[tool]}
+        </span>
+      </div>
+
+      {divider}
+
+      {/* ── PENCIL ── */}
       {tool === 'pencil' && (
-        <>
-          <div className="flex items-center gap-3 min-w-[160px]">
-            <input type="range" min="1" max="20" value={pencilWidth}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-semibold text-zinc-400 w-7 shrink-0">Size</span>
+            <input
+              type="range" min="1" max="20" value={pencilWidth}
               onChange={(e) => setPencilWidth(parseInt(e.target.value))}
-              className="flex-1 h-1 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-600" />
-            <span className="text-xs font-mono text-zinc-500 w-8 text-right">{pencilWidth}px</span>
+              className="flex-1 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full appearance-none cursor-pointer accent-purple-600"
+            />
+            <span className="text-[11px] font-mono text-zinc-500 w-8 text-right">{pencilWidth}px</span>
+          </div>
+          <div className="flex gap-1.5 flex-wrap">
+            {colorPalette.map((c) =>
+              colorBtn(c, pencilColor.toLowerCase() === c.toLowerCase(), () => setPencilColor(c))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── TEXT ── */}
+      {tool === 'text' && (
+        <div className="flex flex-col gap-2">
+          {/* Size slider */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-semibold text-zinc-400 w-7 shrink-0">Size</span>
+            <input
+              type="range" min="12" max="80" value={activeTextSize}
+              onChange={(e) => applyText({ fontSize: parseInt(e.target.value) })}
+              className="flex-1 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full appearance-none cursor-pointer accent-purple-600"
+            />
+            <span className="text-[11px] font-mono text-zinc-500 w-8 text-right">{activeTextSize}px</span>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            {colorPalette.map((c) => (
-              <button key={c}
-                onClick={() => setPencilColor(c)}
-                style={{ backgroundColor: c }}
-                className={`w-6 h-6 rounded-full border transition-all duration-150 ${
-                  pencilColor.toLowerCase() === c.toLowerCase()
-                    ? 'border-zinc-800 dark:border-white scale-110 ring-2 ring-purple-600/40'
-                    : 'border-zinc-300 dark:border-zinc-700 hover:scale-105'
-                }`} />
+          {/* Style + Align + Fonts — wraps cleanly on mobile */}
+          <div className="flex items-center gap-1 flex-wrap">
+            {[
+              { icon: Bold,      key: 'isBold',      active: activeIsBold      },
+              { icon: Italic,    key: 'isItalic',    active: activeIsItalic    },
+              { icon: Underline, key: 'isUnderline', active: activeIsUnderline },
+            ].map(({ icon: Icon, key, active }) => (
+              <button key={key}
+                disabled={!selectedId || selectedObj?.type !== 'text'}
+                onClick={() => selectedId && selectedObj?.type === 'text' && updateObject(selectedId, { [key]: !active })}
+                className={`w-9 h-9 rounded-lg border flex items-center justify-center transition-all disabled:opacity-40 ${
+                  active
+                    ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800'
+                    : 'bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                }`}>
+                <Icon className="w-4 h-4" />
+              </button>
+            ))}
+
+            <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-700 mx-0.5" />
+
+            {[
+              { icon: AlignLeft,   val: 'left'   },
+              { icon: AlignCenter, val: 'center' },
+              { icon: AlignRight,  val: 'right'  },
+            ].map(({ icon: Icon, val }) => (
+              <button key={val}
+                disabled={!selectedId || selectedObj?.type !== 'text'}
+                onClick={() => selectedId && selectedObj?.type === 'text' && updateObject(selectedId, { align: val })}
+                className={`w-9 h-9 rounded-lg border flex items-center justify-center transition-all disabled:opacity-40 ${
+                  activeAlign === val
+                    ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800'
+                    : 'bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                }`}>
+                <Icon className="w-4 h-4" />
+              </button>
+            ))}
+
+            <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-700 mx-0.5" />
+
+            {fontOptions.map((f) => (
+              <button key={f.value}
+                onClick={() => applyText({ fontFamily: f.value })}
+                style={{ fontFamily: f.value }}
+                className={`px-2.5 h-9 text-[11px] font-semibold rounded-lg border transition-all ${
+                  activeFontFamily === f.value
+                    ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800'
+                    : 'bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                }`}>
+                {f.label}
+              </button>
             ))}
           </div>
-        </>
+
+          {/* Colors */}
+          <div className="flex gap-1.5 flex-wrap">
+            {colorPalette.map((c) =>
+              colorBtn(c, activeTextColor.toLowerCase() === c.toLowerCase(), () => applyText({ fontColor: c }))
+            )}
+          </div>
+        </div>
       )}
 
-      {/* ── TEXT PROPERTIES ── */}
-      {tool === 'text' && (
-        <>
-          <CollapsibleSection title="Font Size" icon={Type}>
-            <div className="flex items-center gap-3 min-w-[160px]">
-              <input type="range" min="12" max="80" value={activeTextSize}
-                onChange={(e) => applyText({ fontSize: parseInt(e.target.value) })}
-                className="flex-1 h-1 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-600" />
-              <span className="text-xs font-mono text-zinc-500 w-10 text-right">{activeTextSize}px</span>
-            </div>
-          </CollapsibleSection>
-
-          <CollapsibleSection title="Style" icon={Type}>
-            <div className="flex gap-1">
-              {[
-                { icon: Bold,      key: 'isBold',      active: activeIsBold      },
-                { icon: Italic,    key: 'isItalic',    active: activeIsItalic    },
-                { icon: Underline, key: 'isUnderline', active: activeIsUnderline },
-              ].map(({ icon: Icon, key, active }) => (
-                <button key={key}
-                  disabled={!selectedId || selectedObj?.type !== 'text'}
-                  onClick={() => {
-                    if (selectedId && selectedObj?.type === 'text') {
-                      updateObject(selectedId, { [key]: !active });
-                    }
-                  }}
-                  className={`flex-1 py-1 rounded-lg border flex items-center justify-center transition-all disabled:opacity-40 ${
-                    active ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800'
-                           : 'bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50'}`}>
-                  <Icon className="w-3.5 h-3.5" />
-                </button>
-              ))}
-            </div>
-          </CollapsibleSection>
-
-          <CollapsibleSection title="Alignment" icon={Type}>
-            <div className="flex gap-1">
-              {[
-                { icon: AlignLeft,   val: 'left'   },
-                { icon: AlignCenter, val: 'center' },
-                { icon: AlignRight,  val: 'right'  },
-              ].map(({ icon: Icon, val }) => (
-                <button key={val}
-                  disabled={!selectedId || selectedObj?.type !== 'text'}
-                  onClick={() => {
-                    if (selectedId && selectedObj?.type === 'text') {
-                      updateObject(selectedId, { align: val });
-                    }
-                  }}
-                  className={`flex-1 py-1 rounded-lg border flex items-center justify-center transition-all disabled:opacity-40 ${
-                    activeAlign === val ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800'
-                                       : 'bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50'}`}>
-                  <Icon className="w-3.5 h-3.5" />
-                </button>
-              ))}
-            </div>
-          </CollapsibleSection>
-
-          <CollapsibleSection title="Font" icon={Type}>
-            <div className="flex gap-1">
-              {fontOptions.map((f) => (
-                <button key={f.value}
-                  onClick={() => applyText({ fontFamily: f.value })}
-                  style={{ fontFamily: f.value }}
-                  className={`py-1 px-2 text-[9px] font-semibold rounded-md border text-center transition-all ${
-                    activeFontFamily === f.value
-                      ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800'
-                      : 'bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50'}`}>
-                  {f.label}
-                </button>
-              ))}
-            </div>
-          </CollapsibleSection>
-
-          <CollapsibleSection title="Text Color" icon={Type}>
-            <div className="flex items-center gap-1.5">
-              {colorPalette.map((c) => (
-                <button key={c}
-                  onClick={() => applyText({ fontColor: c })}
-                  style={{ backgroundColor: c }}
-                  className={`w-6 h-6 rounded-full border transition-all duration-150 ${
-                    activeTextColor.toLowerCase() === c.toLowerCase()
-                      ? 'border-zinc-800 dark:border-white scale-110 ring-2 ring-purple-600/40'
-                      : 'border-zinc-300 dark:border-zinc-700 hover:scale-105'
-                  }`} />
-              ))}
-            </div>
-          </CollapsibleSection>
-        </>
-      )}
-
-      {/* ── SHAPE PROPERTIES ── */}
+      {/* ── SHAPE ── */}
       {tool === 'shape' && (
-        <>
-          <CollapsibleSection title="Shape Type" icon={Shapes}>
-            <div className="grid grid-cols-7 gap-1">
-              {[
-                { id: 'square',    label: 'Square',   icon: Square    },
-                { id: 'circle',    label: 'Circle',   icon: Circle    },
-                { id: 'triangle',  label: 'Triangle', icon: Triangle  },
-                { id: 'arrow',     label: 'Arrow',    icon: ArrowRight},
-                { id: 'line',      label: 'Line',     icon: Minus     },
-                { id: 'polygon-5', label: 'Pentagon', icon: Hexagon, sides: 5 },
-                { id: 'polygon-6', label: 'Hexagon',  icon: Hexagon, sides: 6 },
-              ].map((s) => {
-                const ShapeIcon = s.icon;
-                const isActiveSel = s.id.startsWith('polygon')
-                  ? activeShapeType === 'polygon' && activeShapeSides === s.sides
-                  : activeShapeType === s.id;
+        <div className="flex flex-col gap-2">
+          {/* Shape type — 4 cols on mobile, 7 on wider */}
+          <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
+            {[
+              { id: 'square',    label: 'Square',   icon: Square     },
+              { id: 'circle',    label: 'Circle',   icon: Circle     },
+              { id: 'triangle',  label: 'Triangle', icon: Triangle   },
+              { id: 'arrow',     label: 'Arrow',    icon: ArrowRight },
+              { id: 'line',      label: 'Line',     icon: Minus      },
+              { id: 'polygon-5', label: 'Pentagon', icon: Hexagon, sides: 5 },
+              { id: 'polygon-6', label: 'Hexagon',  icon: Hexagon, sides: 6 },
+            ].map((s) => {
+              const ShapeIcon = s.icon;
+              const isActiveSel = s.id.startsWith('polygon')
+                ? activeShapeType === 'polygon' && activeShapeSides === s.sides
+                : activeShapeType === s.id;
+              return (
+                <button key={s.id}
+                  onClick={() => {
+                    if (s.id.startsWith('polygon')) { setShapeType('polygon'); setShapeSides(s.sides); }
+                    else setShapeType(s.id);
+                    if (selectedId && selectedObj?.type === 'shape') {
+                      updateObject(selectedId, s.id.startsWith('polygon')
+                        ? { shapeType: 'polygon', sides: s.sides }
+                        : { shapeType: s.id });
+                    }
+                  }}
+                  title={s.label}
+                  className={`py-2 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all ${
+                    isActiveSel
+                      ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800 ring-2 ring-purple-500/20'
+                      : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                  }`}>
+                  <ShapeIcon className="w-4 h-4" />
+                  <span className="text-[9px] font-medium leading-none">{s.label}</span>
+                </button>
+              );
+            })}
+          </div>
 
-                return (
-                  <button key={s.id}
-                    onClick={() => {
-                      if (s.id.startsWith('polygon')) {
-                        setShapeType('polygon');
-                        setShapeSides(s.sides);
-                      } else {
-                        setShapeType(s.id);
-                      }
-                      if (selectedId && selectedObj?.type === 'shape') {
-                        updateObject(selectedId, s.id.startsWith('polygon')
-                          ? { shapeType: 'polygon', sides: s.sides }
-                          : { shapeType: s.id });
-                      }
-                    }}
-                    title={s.label}
-                    className={`p-1.5 rounded-lg border flex flex-col items-center justify-center gap-0.5 transition-all ${
-                      isActiveSel
-                        ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800 ring-2 ring-purple-600/20'
-                        : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}`}>
-                    <ShapeIcon className="w-4 h-4" />
-                    <span className="text-[8px] font-medium leading-none">{s.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </CollapsibleSection>
-
-          <CollapsibleSection title="Fill" icon={Shapes}>
+          {/* Fill + Color — wraps on narrow screens */}
+          <div className="flex items-center gap-2 flex-wrap">
             <div className="flex gap-1">
               {['none', 'light', 'solid'].map((choice) => (
                 <button key={choice}
                   onClick={() => applyShape(undefined, deriveFill(choice))}
-                  className={`flex-1 py-1 text-[9px] font-semibold rounded-md border text-center capitalize transition-all ${
+                  className={`px-3 h-8 text-[11px] font-semibold rounded-lg border capitalize transition-all ${
                     currentFillChoice === choice
                       ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800 shadow-sm'
-                      : 'bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50'}`}>
+                      : 'bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                  }`}>
                   {choice}
                 </button>
               ))}
             </div>
-          </CollapsibleSection>
 
-          <CollapsibleSection title="Shape Color" icon={Shapes}>
-            <div className="flex items-center gap-1.5">
-              {colorPalette.map((c) => (
-                <button key={c}
-                  onClick={() => applyShape(c, deriveFill(currentFillChoice === 'none' ? 'none' : 'solid'))}
-                  style={{ backgroundColor: c }}
-                  className={`w-6 h-6 rounded-full border transition-all duration-150 ${
-                    activeShapeStroke.toLowerCase() === c.toLowerCase()
-                      ? 'border-zinc-800 dark:border-white scale-110 ring-2 ring-purple-600/40'
-                      : 'border-zinc-300 dark:border-zinc-700 hover:scale-105'
-                  }`} />
-              ))}
+            <div className="w-px h-5 bg-zinc-200 dark:bg-zinc-700" />
+
+            <div className="flex gap-1.5 flex-wrap">
+              {colorPalette.map((c) =>
+                colorBtn(c, activeShapeStroke.toLowerCase() === c.toLowerCase(),
+                  () => applyShape(c, deriveFill(currentFillChoice === 'none' ? 'none' : currentFillChoice))
+                )
+              )}
             </div>
-          </CollapsibleSection>
-        </>
+          </div>
+        </div>
       )}
     </div>
   );
