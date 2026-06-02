@@ -48,6 +48,8 @@ const getSavedSettings = () => {
         bgColor: parsed.bgColor || '#ffffff',
         gridSize: parsed.gridSize || 40,
         gridOpacity: parsed.gridOpacity !== undefined ? parsed.gridOpacity : 0.15,
+        paperSize: parsed.paperSize || 'none',
+        paperOrientation: parsed.paperOrientation || 'portrait',
       };
     }
   } catch (error) {
@@ -59,6 +61,8 @@ const getSavedSettings = () => {
     bgColor: '#ffffff',
     gridSize: 40,
     gridOpacity: 0.15,
+    paperSize: 'none',
+    paperOrientation: 'portrait',
   };
 };
 
@@ -84,6 +88,8 @@ export const useBoardStore = create((set, get) => {
     bgColor: initialSettings.bgColor,
     gridSize: initialSettings.gridSize,
     gridOpacity: initialSettings.gridOpacity,
+    paperSize: initialSettings.paperSize,             // 'none'|'a5'|'a4'|'a3'|'letter'|'legal'
+    paperOrientation: initialSettings.paperOrientation, // 'portrait'|'landscape'
 
     // Active tool options
     pencilColor: '#aa3bff',
@@ -166,6 +172,14 @@ export const useBoardStore = create((set, get) => {
       set({ gridOpacity });
       get().saveSettingsToStorage();
     },
+    setPaperSize: (paperSize) => {
+      set({ paperSize });
+      get().saveSettingsToStorage();
+    },
+    setPaperOrientation: (paperOrientation) => {
+      set({ paperOrientation });
+      get().saveSettingsToStorage();
+    },
 
     // Save settings to Storage
     saveSettingsToStorage: () => {
@@ -176,6 +190,8 @@ export const useBoardStore = create((set, get) => {
         bgColor: state.bgColor,
         gridSize: state.gridSize,
         gridOpacity: state.gridOpacity,
+        paperSize: state.paperSize,
+        paperOrientation: state.paperOrientation,
       };
       localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
     },

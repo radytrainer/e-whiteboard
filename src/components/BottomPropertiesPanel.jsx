@@ -21,7 +21,12 @@ export default function BottomPropertiesPanel() {
     [objects, selectedId]
   );
 
-  if (tool !== 'pencil' && tool !== 'text' && tool !== 'shape') return null;
+  // Also surface the panel in select mode when the user has a shape/text selected.
+  const showPencil = tool === 'pencil';
+  const showText   = tool === 'text'  || (tool === 'select' && selectedObj?.type === 'text');
+  const showShape  = tool === 'shape' || (tool === 'select' && selectedObj?.type === 'shape');
+
+  if (!showPencil && !showText && !showShape) return null;
 
   const colorPalette = [
     '#000000', '#aa3bff', '#3b82f6', '#10b981', '#ef4444', '#f59e0b', '#ec4899',
@@ -76,9 +81,8 @@ export default function BottomPropertiesPanel() {
     : (activeShapeFill.length > 7 && activeShapeFill.endsWith('26')) ? 'light'
     : 'solid';
 
-  const toolLabels = { pencil: 'Pencil', text: 'Text', shape: 'Shape' };
-  const toolIcons  = { pencil: Pen, text: Type, shape: Shapes };
-  const ToolIcon   = toolIcons[tool];
+  const headerLabel = showPencil ? 'Pencil' : showText ? 'Text' : 'Shape';
+  const ToolIcon    = showPencil ? Pen : showText ? Type : Shapes;
 
   const colorBtn = (color, isActive, onClick) => (
     <button
@@ -107,14 +111,14 @@ export default function BottomPropertiesPanel() {
       <div className="flex items-center gap-1.5">
         <ToolIcon className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
         <span className="text-[10px] font-bold uppercase tracking-widest text-purple-500 dark:text-purple-400 font-mono">
-          {toolLabels[tool]}
+          {headerLabel}
         </span>
       </div>
 
       {divider}
 
       {/* ── PENCIL ── */}
-      {tool === 'pencil' && (
+      {showPencil && (
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-semibold text-zinc-400 w-7 shrink-0">Size</span>
@@ -134,7 +138,7 @@ export default function BottomPropertiesPanel() {
       )}
 
       {/* ── TEXT ── */}
-      {tool === 'text' && (
+      {showText && (
         <div className="flex flex-col gap-2">
           {/* Size slider */}
           <div className="flex items-center gap-2">
@@ -211,7 +215,7 @@ export default function BottomPropertiesPanel() {
       )}
 
       {/* ── SHAPE ── */}
-      {tool === 'shape' && (
+      {showShape && (
         <div className="flex flex-col gap-2">
           {/* Shape type — 4 cols on mobile, 7 on wider */}
           <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">

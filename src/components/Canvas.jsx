@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { Stage, Layer, Line, Text, Rect, Group, Image as KonvaImage, Transformer, Circle, RegularPolygon, Arrow } from 'react-konva';
 import Konva from 'konva';
 import { useBoardStore } from '../store/boardStore';
+import { PAPER_SIZES } from './SettingsPanel';
 import TextEditor from './TextEditor';
 import { isLineIntersectingEraser, isRectIntersectingEraser } from '../utils/canvasHelpers';
 
@@ -272,6 +273,8 @@ export default function Canvas({ stageRef }) {
     updateObject,
     deleteObject,
     saveHistory,
+    paperSize,
+    paperOrientation,
   } = useBoardStore();
 
   const [isDrawing, setIsDrawing] = useState(false);
@@ -932,6 +935,31 @@ export default function Canvas({ stageRef }) {
               }}
             />
           )}
+
+          {/* Paper boundary — visual guide rendered behind all objects */}
+          {paperSize !== 'none' && PAPER_SIZES[paperSize] && (() => {
+            const dims = PAPER_SIZES[paperSize];
+            const pw = paperOrientation === 'landscape' ? dims.h : dims.w;
+            const ph = paperOrientation === 'landscape' ? dims.w : dims.h;
+            return (
+              <Rect
+                x={-pw / 2}
+                y={-ph / 2}
+                width={pw}
+                height={ph}
+                fill={bgColor}
+                stroke={theme === 'dark' ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)'}
+                strokeWidth={1 / scale}
+                shadowColor="rgba(0,0,0,0.22)"
+                shadowBlur={18 / scale}
+                shadowOffsetX={4 / scale}
+                shadowOffsetY={4 / scale}
+                shadowOpacity={1}
+                listening={false}
+                name="paper-boundary"
+              />
+            );
+          })()}
 
           {/* Render All Saved Canvas Objects */}
           {objects.map((obj) => {
