@@ -7,6 +7,7 @@ import SettingsPanel from './components/SettingsPanel';
 import ImageUploader from './components/ImageUploader';
 import BottomActions from './components/BottomActions';
 import BottomPropertiesPanel from './components/BottomPropertiesPanel';
+import StickyEmojiPanel from './components/StickyEmojiPanel';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useBoardStore } from './store/boardStore';
 import { exportPNG } from './utils/exportPNG';
@@ -314,8 +315,11 @@ export default function App() {
       <footer className="fixed bottom-4 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-2.5 pointer-events-none">
         {/* Selection actions bar — visible when items are selected (mobile delete) */}
         <SelectionBar />
-        <div className="pointer-events-auto">
-          <BottomPropertiesPanel />
+        <div className="flex items-end gap-2 pointer-events-none">
+          <StickyEmojiPanel />
+          <div className="pointer-events-auto">
+            <BottomPropertiesPanel />
+          </div>
         </div>
         <div className="pointer-events-auto">
           <MathToolbar />

@@ -18,10 +18,6 @@ const STICKY_BG_COLORS = [
   { hex: '#d9f99d', label: 'Lime'    },
 ];
 
-// Exactly 10 emojis per row
-const EMOJI_MOOD  = ['😊','😄','😍','😢','😡','😎','🤔','😅','🎉','💪'];
-const EMOJI_MARKS = ['❤️','⭐','🔥','💡','✅','❌','📌','🎯','👍','💯'];
-
 export default function BottomPropertiesPanel() {
   const {
     tool, selectedId, objects,
@@ -115,11 +111,6 @@ export default function BottomPropertiesPanel() {
     if (selectedId && selectedObj?.type === 'sticky') updateObject(selectedId, updates);
   };
 
-  const insertEmoji = (emoji) => {
-    if (!selectedId || selectedObj?.type !== 'sticky') return;
-    updateObject(selectedId, { text: (selectedObj.text || '') + emoji });
-  };
-
   // ── ui helpers ────────────────────────────────────────────────────────────
   const headerLabel = showPencil ? 'Pencil' : showText ? 'Text' : showShape ? 'Shape' : 'Sticky Note';
   const ToolIcon    = showPencil ? Pen : showText ? Type : showShape ? Shapes : StickyNote;
@@ -195,7 +186,7 @@ export default function BottomPropertiesPanel() {
       bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md
       rounded-2xl shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50
       p-3 flex flex-col gap-2.5
-      w-[min(95vw,600px)]
+      w-[min(95vw,480px)]
       animate-in slide-in-from-bottom-4 duration-200 pointer-events-auto
     ">
       {/* Header */}
@@ -387,29 +378,6 @@ export default function BottomPropertiesPanel() {
             )}
           </div>
 
-          {/* Emoji section — separated by a thin divider, two compact horizontal rows */}
-          {hbar}
-          {[
-            { label: 'Mood',  emojis: EMOJI_MOOD  },
-            { label: 'Marks', emojis: EMOJI_MARKS },
-          ].map(({ label, emojis }) => (
-            <div key={label} className="flex items-center gap-0.5">
-              <span className="text-[9px] font-bold uppercase tracking-wide text-zinc-400 dark:text-zinc-500 w-8 shrink-0">
-                {label}
-              </span>
-              {emojis.map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => insertEmoji(emoji)}
-                  disabled={!selectedId || selectedObj?.type !== 'sticky'}
-                  title={`Add ${emoji}`}
-                  className="w-8 h-8 flex items-center justify-center text-base rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-30 active:scale-90"
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          ))}
         </div>
       )}
     </div>
