@@ -7,7 +7,6 @@ import SettingsPanel from './components/SettingsPanel';
 import ImageUploader from './components/ImageUploader';
 import BottomActions from './components/BottomActions';
 import BottomPropertiesPanel from './components/BottomPropertiesPanel';
-import StickyEmojiPanel from './components/StickyEmojiPanel';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useBoardStore } from './store/boardStore';
 import { exportPNG } from './utils/exportPNG';
@@ -322,7 +321,6 @@ export default function App() {
 
       {/* Self-positioned draggable/collapsible property panels */}
       <BottomPropertiesPanel />
-      <StickyEmojiPanel />
 
       <div className="fixed bottom-4 right-4 z-30 pointer-events-auto">
         <BottomActions />
