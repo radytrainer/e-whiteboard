@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useBoardStore } from '../store/boardStore';
 
@@ -20,9 +20,6 @@ export default function StickyEmojiPanel() {
 
   const showSticky = tool === 'sticky' || (tool === 'select' && selectedObj?.type === 'sticky');
 
-  useEffect(() => {
-    setCollapsed(false);
-  }, [tool, selectedId]);
 
   const onHeaderPointerDown = useCallback((e) => {
     if (e.button !== 0) return;
@@ -65,7 +62,7 @@ export default function StickyEmojiPanel() {
     return (
       <button
         onClick={() => setCollapsed(false)}
-        style={{ left: '8px', bottom: '28px' }}
+        style={{ left: '8px', bottom: '16px' }}
         className="fixed z-40 w-10 h-10 rounded-full bg-white/95 dark:bg-zinc-900/95 shadow-xl border border-zinc-200/50 dark:border-zinc-800/50 flex items-center justify-center text-lg hover:scale-110 active:scale-95 transition-transform pointer-events-auto"
         title="Expand emoji panel"
       >

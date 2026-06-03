@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Undo2,
   Redo2,
@@ -22,6 +22,11 @@ export default function BottomActions() {
   } = useBoardStore();
 
   const [isOpen, setIsOpen] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setIsOpen(false), 5000);
+    return () => clearTimeout(t);
+  }, []);
 
   const handleZoomIn = () => setScale(Math.min(15, scale * 1.15));
   const handleZoomOut = () => setScale(Math.max(0.15, scale / 1.15));
