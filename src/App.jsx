@@ -7,6 +7,7 @@ import SettingsPanel from './components/SettingsPanel';
 import ImageUploader from './components/ImageUploader';
 import BottomActions from './components/BottomActions';
 import BottomPropertiesPanel from './components/BottomPropertiesPanel';
+import OfflineIndicator from './components/OfflineIndicator';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useBoardStore } from './store/boardStore';
 import { exportPNG } from './utils/exportPNG';
@@ -140,6 +141,7 @@ export default function App() {
 
   return (
     <div className="w-screen h-screen flex flex-col overflow-hidden bg-zinc-50 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-100 transition-colors duration-300">
+      <OfflineIndicator />
       <ImageUploader />
 
       {notification && (

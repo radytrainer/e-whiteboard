@@ -1,4 +1,5 @@
 {
+  "id": "/",
   "name": "Whiteboard - Free Online Drawing & Brainstorming Tool",
   "short_name": "Whiteboard",
   "description": "Free online whiteboard for teams. Draw, sketch, brainstorm, and collaborate in real-time. Features include canvas tools, math formulas, shapes, text, PDF/PNG export, and more.",
@@ -9,6 +10,7 @@
   "theme_color": "#863bff",
   "lang": "en",
   "categories": ["productivity", "utilities", "education"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/favicon.svg",
