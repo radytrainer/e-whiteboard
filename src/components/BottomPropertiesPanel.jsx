@@ -221,7 +221,7 @@ export default function BottomPropertiesPanel() {
     return (
       <button
         onClick={() => setCollapsed(false)}
-        style={{ left: '8px', top: '50%', transform: 'translateY(-50%)' }}
+        style={{ left: '8px', bottom: '80px' }}
         className="fixed z-40 w-10 h-10 rounded-full bg-white/95 dark:bg-zinc-900/95 shadow-xl border border-zinc-200/50 dark:border-zinc-800/50 flex items-center justify-center text-purple-500 hover:scale-110 active:scale-95 transition-transform pointer-events-auto"
         title={`Expand ${headerLabel} properties`}
       >
