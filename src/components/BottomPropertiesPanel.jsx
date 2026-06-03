@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import {
   Square, Circle, Triangle, Minus, Hexagon, ArrowRight,
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
-  Pen, Type, Shapes, StickyNote,
+  Pen, Type, Shapes, StickyNote, ChevronDown,
 } from 'lucide-react';
 import { useBoardStore } from '../store/boardStore';
 
@@ -19,6 +19,11 @@ const STICKY_BG_COLORS = [
 ];
 
 export default function BottomPropertiesPanel() {
+  const [collapsed, setCollapsed] = useState(false);
+  const [pos, setPos] = useState(null); // null = default bottom-center
+  const panelRef = useRef(null);
+  const dragOrigin = useRef(null);
+
   const {
     tool, selectedId, objects,
     pencilColor, setPencilColor, pencilWidth, setPencilWidth,
@@ -34,11 +39,43 @@ export default function BottomPropertiesPanel() {
     [objects, selectedId]
   );
 
-  // Show panel for active tool OR when the matching object type is selected
   const showPencil = tool === 'pencil';
   const showText   = tool === 'text'   || (tool === 'select' && selectedObj?.type === 'text');
   const showShape  = tool === 'shape'  || (tool === 'select' && selectedObj?.type === 'shape');
   const showSticky = tool === 'sticky' || (tool === 'select' && selectedObj?.type === 'sticky');
+
+  // Auto-expand when switching tool or selecting a different object
+  useEffect(() => {
+    setCollapsed(false);
+  }, [tool, selectedId]);
+
+  const onHeaderPointerDown = useCallback((e) => {
+    if (e.button !== 0) return;
+    if (e.target.closest('[data-nodrag]')) return;
+    e.preventDefault();
+    const rect = panelRef.current.getBoundingClientRect();
+    // Latch current pixel coords so panel doesn't jump on first drag
+    setPos({ x: rect.left, y: rect.top });
+    dragOrigin.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      originX: rect.left,
+      originY: rect.top,
+    };
+    const onMove = (me) => {
+      const { startX, startY, originX, originY } = dragOrigin.current;
+      setPos({
+        x: Math.max(0, Math.min(window.innerWidth  - 80, originX + me.clientX - startX)),
+        y: Math.max(0, Math.min(window.innerHeight - 60, originY + me.clientY - startY)),
+      });
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup',   onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup',   onUp);
+  }, []);
 
   if (!showPencil && !showText && !showShape && !showSticky) return null;
 
@@ -128,7 +165,6 @@ export default function BottomPropertiesPanel() {
     />
   );
 
-  // Shared button style for B/I/U + alignment + font buttons
   const fmtBtn = (active) =>
     `rounded-lg border flex items-center justify-center transition-all disabled:opacity-40 ${
       active
@@ -139,7 +175,6 @@ export default function BottomPropertiesPanel() {
   const vbar = <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-700 mx-0.5" />;
   const hbar = <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-0.5" />;
 
-  // Formatting row — shared between text and sticky sections
   const FormatRow = ({ getActive, getAlign, onToggle, onAlign, onFont, activeFont, disabled }) => (
     <div className="flex items-center gap-1 flex-wrap">
       {[
@@ -181,20 +216,48 @@ export default function BottomPropertiesPanel() {
     </div>
   );
 
+  // ── collapsed: small circle on the left edge ───────────────────────────────
+  if (collapsed) {
+    return (
+      <button
+        onClick={() => setCollapsed(false)}
+        style={{ left: '8px', top: '50%', transform: 'translateY(-50%)' }}
+        className="fixed z-40 w-10 h-10 rounded-full bg-white/95 dark:bg-zinc-900/95 shadow-xl border border-zinc-200/50 dark:border-zinc-800/50 flex items-center justify-center text-purple-500 hover:scale-110 active:scale-95 transition-transform pointer-events-auto"
+        title={`Expand ${headerLabel} properties`}
+      >
+        <ToolIcon className="w-4 h-4" />
+      </button>
+    );
+  }
+
+  // ── panel positioning: default = bottom-center, after drag = top/left ──────
+  const panelStyle = pos
+    ? { left: pos.x, top: pos.y }
+    : { bottom: '1rem', left: '50%', transform: 'translateX(-50%)' };
+
   return (
-    <div className="
-      bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md
-      rounded-2xl shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50
-      p-3 flex flex-col gap-2.5
-      w-[min(95vw,480px)]
-      animate-in slide-in-from-bottom-4 duration-200 pointer-events-auto
-    ">
-      {/* Header */}
-      <div className="flex items-center gap-1.5">
+    <div
+      ref={panelRef}
+      style={panelStyle}
+      className="fixed z-40 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-2xl shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50 p-3 flex flex-col gap-2.5 w-[min(95vw,480px)] pointer-events-auto animate-in slide-in-from-bottom-4 duration-200"
+    >
+      {/* Header — drag handle + collapse button */}
+      <div
+        className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing select-none touch-none"
+        onPointerDown={onHeaderPointerDown}
+      >
         <ToolIcon className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
-        <span className="text-[10px] font-bold uppercase tracking-widest text-purple-500 dark:text-purple-400 font-mono">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-purple-500 dark:text-purple-400 font-mono flex-1">
           {headerLabel}
         </span>
+        <button
+          data-nodrag="true"
+          onClick={() => setCollapsed(true)}
+          className="w-6 h-6 flex items-center justify-center rounded-md text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          title="Minimize"
+        >
+          <ChevronDown className="w-4 h-4" />
+        </button>
       </div>
 
       {hbar}
@@ -313,7 +376,6 @@ export default function BottomPropertiesPanel() {
 
           {/* Row 1: BG swatches · size slider — all inline */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* BG colour dots */}
             <div className="flex gap-1 shrink-0">
               {STICKY_BG_COLORS.map(({ hex }) => (
                 <button key={hex} onClick={() => applySticky({ color: hex })}
@@ -327,7 +389,6 @@ export default function BottomPropertiesPanel() {
               ))}
             </div>
             {vbar}
-            {/* Size */}
             <span className="text-[10px] font-semibold text-zinc-400 shrink-0">Size</span>
             <input type="range" min="10" max="48" value={activeStickySize}
               onChange={(e) => applySticky({ fontSize: parseInt(e.target.value) })}
